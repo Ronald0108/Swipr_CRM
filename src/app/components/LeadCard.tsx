@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Lead } from '../data/leads';
-import { Phone, Mail, MapPin, TrendingUp, Clock, Zap, X } from 'lucide-react';
+import { Phone, Mail, MapPin, TrendingUp, Clock, Zap, X, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export type SwipeAction = 'voicemail' | 'lost' | 'connected' | 'next';
-export type OverlayAction = SwipeAction | 'email';
+export type OverlayAction = SwipeAction | 'email' | 'notes';
 
 interface OverlayInfo {
   action: OverlayAction;
@@ -17,6 +17,10 @@ interface LeadCardProps {
   cardIndex: number;
   onEdit: (field: keyof Lead, value: string | string[] | number) => void;
   isActive: boolean;
+  onViewHistory?: () => void;
+  onCall?: () => void;
+  autoEditNameToken?: number;
+  statusLabel: string;
 }
 
 const COMPANY_GRADIENTS = [
@@ -38,6 +42,7 @@ const overlayConfig: Record<OverlayAction, { bg: string; label: string; icon: st
   voicemail: { bg: 'bg-amber-500/90',   label: 'VOICEMAIL', icon: '📞', border: 'border-amber-400'   },
   next:      { bg: 'bg-sky-500/90',     label: 'SKIP',      icon: '→',  border: 'border-sky-400'     },
   email:     { bg: 'bg-purple-500/90',  label: 'EMAIL SENT',icon: '✉',  border: 'border-purple-400'  },
+  notes:     { bg: 'bg-yellow-500/90',  label: 'NOTES SAVED',icon: '✎', border: 'border-yellow-300'  },
 };
 
 // ── Editable Field ─────────────────────────────────────────────────────────
@@ -49,6 +54,7 @@ function EditableField({
   multiline = false,
   placeholder = 'Click to edit',
   disabled = false,
+  autoEditToken,
 }: {
   value: string;
   onSave: (v: string) => void;
@@ -57,9 +63,16 @@ function EditableField({
   multiline?: boolean;
   placeholder?: string;
   disabled?: boolean;
+  autoEditToken?: number;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    if (disabled || autoEditToken === undefined) return;
+    setDraft(value);
+    setEditing(true);
+  }, [autoEditToken, disabled, value]);
 
   const commit = (val: string) => {
     if (val.trim() !== value) onSave(val.trim());
@@ -126,60 +139,22 @@ function EditableField({
   );
 }
 
-// ── Score Ring ────────────────────────────────────────────────────────────
-function ScoreRing({ score, onEdit, isActive }: { score: number; onEdit: (v: number) => void; isActive: boolean }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const color = score >= 85 ? '#10b981' : score >= 70 ? '#f59e0b' : '#f43f5e';
-
-  if (editing) {
-    return (
-      <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-        <input
-          autoFocus
-          type="number"
-          min={0}
-          max={100}
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          onBlur={() => { onEdit(Math.min(100, Math.max(0, parseInt(draft) || 0))); setEditing(false); }}
-          onKeyDown={e => {
-            e.stopPropagation();
-            if (e.key === 'Enter') { onEdit(Math.min(100, Math.max(0, parseInt(draft) || 0))); setEditing(false); }
-            if (e.key === 'Escape') setEditing(false);
-          }}
-          className="w-12 h-12 rounded-full text-center text-xs border-2 border-indigo-400 focus:outline-none font-bold"
-          style={{ color }}
-        />
-        <span className="text-[10px] text-gray-400 uppercase tracking-wide">Score</span>
-      </div>
-    );
-  }
-
+function StatusBadge({ label }: { label: string }) {
+  const isEmpty = label === 'None';
   return (
-    <div
-      className={`flex flex-col items-center gap-0.5 flex-shrink-0 ${isActive ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}`}
-      onClick={() => isActive && (setDraft(String(score)), setEditing(true))}
-      title={isActive ? 'Click to edit score' : undefined}
-    >
-      <div
-        className="w-10 h-10 rounded-full flex items-center justify-center"
-        style={{ background: `conic-gradient(${color} ${score * 3.6}deg, #1f2937 0deg)` }}
-      >
-        <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center">
-          <span style={{ color, fontSize: '10px', fontWeight: 700 }}>{score}</span>
-        </div>
-      </div>
-      <span className="text-[10px] text-gray-400 uppercase tracking-wide">Score</span>
+    <div className={`flex-shrink-0 rounded-md border px-2.5 py-1.5 text-right ${isEmpty ? 'border-gray-200 bg-gray-50' : 'border-emerald-200 bg-emerald-50'}`}>
+      <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">Status</p>
+      <p className={`text-xs font-bold ${isEmpty ? 'text-gray-500' : 'text-emerald-700'}`}>{label}</p>
     </div>
   );
 }
 
 // ── Lead Card ─────────────────────────────────────────────────────────────
-export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive }: LeadCardProps) {
+export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onViewHistory, onCall, autoEditNameToken, statusLabel }: LeadCardProps) {
   const gradient = COMPANY_GRADIENTS[cardIndex % COMPANY_GRADIENTS.length];
   const showOverlay = overlayInfo?.index === cardIndex;
   const overlay = showOverlay && overlayInfo ? overlayConfig[overlayInfo.action] : null;
+  const canCall = isActive && Boolean(onCall) && lead.phone.trim().length > 0;
 
   const [addingTag, setAddingTag] = useState(false);
   const [newTagValue, setNewTagValue] = useState('');
@@ -188,7 +163,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive }: Lea
     <div className="relative w-full h-full rounded-3xl bg-white shadow-2xl overflow-hidden select-none">
 
       {/* ── Company Header (no deal size) ── */}
-      <div className={`bg-gradient-to-br ${gradient} px-5 py-4`}>
+      <div className={`bg-gradient-to-br ${gradient} px-5 py-3`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-lg">{lead.company[0]}</span>
@@ -213,7 +188,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive }: Lea
       </div>
 
       {/* ── Identity (no avatar) ── */}
-      <div className="flex items-start justify-between px-5 py-3 border-b border-gray-100 gap-3">
+      <div className="flex items-start justify-between px-5 py-2 border-b border-gray-100 gap-3">
         <div className="flex-1 min-w-0">
           <EditableField
             value={lead.name}
@@ -221,6 +196,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive }: Lea
             displayClassName="text-gray-900 font-bold text-xl leading-tight block"
             inputClassName="text-gray-900 font-bold text-xl"
             disabled={!isActive}
+            autoEditToken={autoEditNameToken}
           />
           <EditableField
             value={lead.title}
@@ -248,15 +224,27 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive }: Lea
             />
           </div>
         </div>
-        <ScoreRing score={lead.score} onEdit={v => onEdit('score', v)} isActive={isActive} />
+        <StatusBadge label={statusLabel} />
       </div>
 
       {/* ── Contact Info ── */}
-      <div className="px-5 py-3 border-b border-gray-100 space-y-2">
+      <div className="px-5 py-2 border-b border-gray-100 space-y-1.5">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (canCall) onCall?.();
+            }}
+            disabled={!canCall}
+            aria-label={`Call ${lead.name}`}
+            title={canCall ? `Call ${lead.phone}` : 'No phone number available'}
+            className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+              canCall ? 'bg-blue-50 hover:bg-blue-100 cursor-pointer' : 'bg-gray-100 cursor-not-allowed opacity-60'
+            }`}
+          >
             <Phone className="w-3.5 h-3.5 text-blue-600" />
-          </div>
+          </button>
           <EditableField
             value={lead.phone}
             onSave={v => onEdit('phone', v)}
@@ -287,7 +275,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive }: Lea
       </div>
 
       {/* ── Stats Row (source + last contact only, no company size) ── */}
-      <div className="px-5 py-2.5 border-b border-gray-100 flex items-center gap-4">
+      <div className="px-5 py-2 border-b border-gray-100 flex items-center gap-4">
         <div className="flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
           <EditableField
@@ -311,18 +299,28 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive }: Lea
             placeholder="Last contact"
           />
         </div>
+        {isActive && onViewHistory && (
+          <button
+            onClick={onViewHistory}
+            className="ml-auto inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-semibold text-indigo-600 transition-colors hover:bg-indigo-100"
+          >
+            <History className="h-3 w-3" />
+            View History
+          </button>
+        )}
       </div>
+      
 
       {/* ── Notes ── */}
-      <div className="px-5 py-3 border-b border-gray-100">
-        <div className="flex items-center gap-1.5 mb-1.5">
+      <div className="px-5 py-2 border-b border-gray-100">
+        <div className="flex items-center gap-1.5 mb-1">
           <Zap className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</span>
         </div>
         <EditableField
           value={lead.notes}
           onSave={v => onEdit('notes', v)}
-          displayClassName="text-gray-600 text-sm leading-relaxed line-clamp-2 block"
+          displayClassName="text-gray-600 text-sm leading-snug line-clamp-2 block"
           inputClassName="text-gray-600 text-sm leading-relaxed"
           multiline
           disabled={!isActive}
@@ -331,7 +329,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive }: Lea
       </div>
 
       {/* ── Tags ── */}
-      <div className="px-5 py-2.5 flex flex-wrap gap-1.5 items-center">
+      <div className="px-5 py-2 flex flex-wrap gap-1.5 items-center">
         {lead.tags.map((tag, idx) => (
           <span
             key={`${tag}-${idx}`}

@@ -70,15 +70,28 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
   const [body, setBody] = useState(buildEmailBody(lead, 'follow_up'));
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [sent, setSent] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+
+  const draftStorageKey = `swiprcrm.emailDraft.${lead.id}`;
 
   useEffect(() => {
     if (isOpen) {
+      const savedDraftRaw = window.localStorage.getItem(draftStorageKey);
+      let savedDraft: { template: string; subject: string; body: string } | null = null;
+      if (savedDraftRaw) {
+        try {
+          savedDraft = JSON.parse(savedDraftRaw) as { template: string; subject: string; body: string };
+        } catch {
+          savedDraft = null;
+        }
+      }
       setSent(false);
-      setTemplate('follow_up');
-      setSubject(`Re: ${lead.company} — Quick Follow Up`);
-      setBody(buildEmailBody(lead, 'follow_up'));
+      setDraftSaved(false);
+      setTemplate(savedDraft?.template ?? 'follow_up');
+      setSubject(savedDraft?.subject ?? `Re: ${lead.company} — Quick Follow Up`);
+      setBody(savedDraft?.body ?? buildEmailBody(lead, 'follow_up'));
     }
-  }, [lead, isOpen]);
+  }, [draftStorageKey, lead, isOpen]);
 
   const selectTemplate = (id: string) => {
     setTemplate(id);
@@ -89,6 +102,7 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
   };
 
   const handleSend = () => {
+    window.localStorage.removeItem(draftStorageKey);
     setSent(true);
     onSend?.();
     setTimeout(() => {
@@ -96,8 +110,21 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
     }, 1500);
   };
 
+  const handleSaveDraft = () => {
+    window.localStorage.setItem(draftStorageKey, JSON.stringify({ template, subject, body }));
+    setDraftSaved(true);
+    setTimeout(() => setDraftSaved(false), 1200);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
+    if (e.key === 'Escape') {
+      onClose();
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!sent) handleSend();
+    }
   };
 
   return (
@@ -202,25 +229,35 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
 
             {/* Footer */}
             <div className="px-6 pb-5 flex items-center justify-between">
-              <span className="text-xs text-gray-400">Esc to close</span>
-              <button
-                onClick={handleSend}
-                disabled={sent}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-semibold transition-all ${
-                  sent
-                    ? 'bg-emerald-500 scale-95'
-                    : 'bg-purple-600 hover:bg-purple-700 hover:scale-105'
-                }`}
-              >
-                {sent ? (
-                  <>✓ Sent!</>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" />
-                    Send Email
-                  </>
-                )}
-              </button>
+              <span className="text-xs text-gray-400">Esc to close · Cmd/Ctrl + Enter to send</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSaveDraft}
+                  className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    draftSaved ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {draftSaved ? 'Draft Saved' : 'Save Draft'}
+                </button>
+                <button
+                  onClick={handleSend}
+                  disabled={sent}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-semibold transition-all ${
+                    sent
+                      ? 'bg-emerald-500 scale-95'
+                      : 'bg-purple-600 hover:bg-purple-700 hover:scale-105'
+                  }`}
+                >
+                  {sent ? (
+                    <>✓ Sent!</>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      Send Email
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

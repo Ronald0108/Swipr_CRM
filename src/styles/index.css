@@ -1,3 +1,25 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+.login-gradient-bg {
+  background: radial-gradient(
+    190% 75% at 50% 0%,
+    #050507 18%,
+    #0d0a18 40%,
+    #211447 72%,
+    #4b2bb8 100%
+  );
+}
+
+@media (max-width: 809.98px) {
+  .login-gradient-bg {
+    background: radial-gradient(
+      276% 105% at 50% 0%,
+      #050507 16%,
+      #0d0a18 38%,
+      #211447 68%,
+      #4b2bb8 92%
+    );
+  }
+}
