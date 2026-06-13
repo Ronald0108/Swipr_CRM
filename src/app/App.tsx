@@ -494,6 +494,7 @@ export default function App() {
   const [showNotesModal, setShowNotesModal]   = useState(false);
   const [showEmailModal, setShowEmailModal]   = useState(false);
   const [showLeadSearch, setShowLeadSearch] = useState(false);
+  const [isActivityLogCollapsed, setIsActivityLogCollapsed] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingLead, setDeletingLead] = useState(false);
   const [creatingLead, setCreatingLead] = useState(false);
@@ -1293,7 +1294,6 @@ export default function App() {
   };
 
   const progress  = leads.length > 0 ? (currentIndex / leads.length) * 100 : 0;
-  const remaining = Math.max(0, leads.length - currentIndex);
   const total     = leads.length;
   const currentLeadPosition = total > 0 ? Math.min(currentIndex + 1, total) : 0;
   const normalizedLeadSearchQuery = leadSearchQuery.trim().toLowerCase();
@@ -1858,25 +1858,6 @@ export default function App() {
               className="w-full h-full object-cover"
             />
           </div>
-          <span className="text-white font-bold tracking-tight">Swipr CRM</span>
-        </div>
-
-        {/* Stats — count / total */}
-        <div className="flex items-center gap-2">
-          {([
-            { icon: CheckCircle, count: statsCount.connected, color: 'text-emerald-400', label: 'Connected' },
-            { icon: XCircle,     count: statsCount.lost,      color: 'text-rose-400',    label: 'Lost'      },
-            { icon: Voicemail,   count: statsCount.voicemail, color: 'text-amber-400',   label: 'Voicemail' },
-            { icon: SkipForward, count: statsCount.next,      color: 'text-sky-400',     label: 'Skipped'   },
-          ] as const).map(({ icon: Icon, count, color, label }) => (
-            <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: '#13131a', border: '1px solid #1c1c2a' }}>
-              <Icon className={`w-3.5 h-3.5 ${color}`} />
-              <span className="text-white font-semibold text-sm">
-                {count}<span className="text-gray-600 font-normal">/{total}</span>
-              </span>
-              <span className="text-gray-500 text-xs hidden md:block">{label}</span>
-            </div>
-          ))}
         </div>
 
         {/* Progress */}
@@ -1890,14 +1871,6 @@ export default function App() {
                 transition={{ duration: 0.4 }}
               />
             </div>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: '#13131a', border: '1px solid #1c1c2a' }}>
-            <Users className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-white font-semibold text-sm">{remaining}</span>
-            <span className="text-gray-500 text-xs">left</span>
-          </div>
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: '#13131a', border: '1px solid #1c1c2a' }}>
-            <span className="text-gray-500 text-xs">{session.user.email}</span>
           </div>
           <button
             onClick={() => {
@@ -1937,7 +1910,7 @@ export default function App() {
       <main className="flex-1 flex overflow-hidden min-h-0">
 
         {/* ── CENTER: Rolodex ── */}
-        <div className="flex-1 flex flex-col items-center justify-center py-4 relative">
+        <div className="order-3 flex-1 flex flex-col items-center justify-center py-4 relative">
           {isDone ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -2011,10 +1984,119 @@ export default function App() {
           )}
         </div>
 
+        {/* ── LEFT SIDEBAR: Activity Log ── */}
+        <motion.aside
+          className="order-1 flex-shrink-0 flex flex-col border-l overflow-hidden"
+          initial={false}
+          animate={{ width: isActivityLogCollapsed ? 0 : 288 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+          style={{ background: '#0e0e17', borderColor: '#1c1c2a' }}
+          aria-hidden={isActivityLogCollapsed}
+        >
+          {/* Header */}
+          <div className="w-72 px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: '#1c1c2a' }}>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-indigo-400" />
+              <span className="text-white text-sm font-semibold">Activity Log</span>
+            </div>
+            <span className="text-gray-600 text-xs">{activityLog.length} actions</span>
+          </div>
+
+          {/* Current lead quick info */}
+          {!isDone && currentLead && (
+            <div className="w-[264px] px-4 py-3 border-b mx-3 mt-3 rounded-xl" style={{ background: '#13131a', border: '1px solid #1f1f2e' }}>
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1.5">Current Lead</p>
+              <p className="text-white font-semibold text-sm truncate">{currentLead.name}</p>
+              <p className="text-gray-400 text-xs truncate">{currentLead.company}</p>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-indigo-400 text-xs font-semibold">{currentLead.industry}</span>
+                <span className="text-gray-500 text-xs">Score: {currentLead.score ?? 0}</span>
+              </div>
+              <button
+                onClick={() => openLeadHistory(currentLead.id)}
+                className="mt-2 w-full rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-2 py-1.5 text-xs font-semibold text-indigo-300 transition-colors hover:bg-indigo-500/20"
+              >
+                View History
+              </button>
+            </div>
+          )}
+
+          {/* Activity items */}
+          <div className="w-72 flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
+            <AnimatePresence initial={false}>
+              {activityLog.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-10">
+                  <Zap className="w-8 h-8 text-gray-700 mb-3" />
+                  <p className="text-gray-600 text-xs">Actions will appear here</p>
+                  <p className="text-gray-700 text-xs mt-1">Press a key to get started</p>
+                </div>
+              ) : (
+                activityLog.map((item) => {
+                  const meta = actionMeta[item.action];
+                  const Icon = meta.Icon;
+                  return (
+                    <motion.button
+                      type="button"
+                      key={item.id}
+                      initial={{ opacity: 0, x: 20, height: 0 }}
+                      animate={{ opacity: 1, x: 0, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      onClick={() => openLeadHistory(item.leadId)}
+                      className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-transform hover:scale-[1.01] ${meta.bgColor}`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${meta.color}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-xs font-medium truncate">{item.leadName}</p>
+                        <p className="text-gray-500 text-xs truncate">{item.company}</p>
+                      </div>
+                      <div className="flex flex-col items-end flex-shrink-0">
+                        <span className={`text-[10px] font-semibold ${meta.color}`}>{meta.label}</span>
+                        <span className="text-gray-600 text-[10px]">{timeAgo(item.timestamp)}</span>
+                      </div>
+                    </motion.button>
+                  );
+                })
+              )}
+            </AnimatePresence>
+          </div>
+          <div className="w-72 border-t p-3" style={{ borderColor: '#1c1c2a' }}>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { icon: CheckCircle, count: statsCount.connected, color: 'text-emerald-400', label: 'Connected' },
+                { icon: XCircle, count: statsCount.lost, color: 'text-rose-400', label: 'Lost' },
+                { icon: Voicemail, count: statsCount.voicemail, color: 'text-amber-400', label: 'Voicemail' },
+                { icon: SkipForward, count: statsCount.next, color: 'text-sky-400', label: 'Skipped' },
+              ] as const).map(({ icon: Icon, count, color, label }) => (
+                <div key={label} className="rounded-lg border px-2 py-1.5" style={{ background: '#13131a', borderColor: '#1f1f2e' }}>
+                  <div className="flex items-center justify-between gap-1">
+                    <Icon className={`w-3.5 h-3.5 ${color}`} />
+                    <span className="text-white text-xs font-semibold">{count}</span>
+                  </div>
+                  <p className="mt-0.5 truncate text-[10px] text-gray-500">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.aside>
+
         <div
-          className="relative w-12 flex-shrink-0 border-l flex flex-col items-center gap-2 pt-4"
+          className="order-2 relative w-12 flex-shrink-0 border-l flex flex-col items-center gap-2 px-1 pt-4 pb-4"
           style={{ borderColor: '#1c1c2a', background: '#0a0a0f' }}
         >
+          <button
+            type="button"
+            title={isActivityLogCollapsed ? 'Show activity log' : 'Hide activity log'}
+            aria-label={isActivityLogCollapsed ? 'Show activity log' : 'Hide activity log'}
+            aria-pressed={!isActivityLogCollapsed}
+            onClick={() => setIsActivityLogCollapsed((value) => !value)}
+            className={`h-9 w-9 rounded-lg border flex items-center justify-center transition-colors ${
+              isActivityLogCollapsed ? 'border-gray-800 bg-transparent text-gray-500 hover:text-gray-300' : 'border-indigo-400 bg-indigo-500/15 text-indigo-300'
+            }`}
+          >
+            <BarChart3 className="h-4 w-4" />
+          </button>
+
           <button
             type="button"
             title="Add new lead"
@@ -2099,103 +2181,29 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {leads.length > 0 && currentIndex > 0 ? (
+            <motion.button
+              type="button"
+              onClick={jumpToFirstLead}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="group mt-auto flex h-9 w-9 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-500/15 text-indigo-100 shadow-2xl transition-colors duration-200 hover:bg-indigo-500/25"
+              title="Back to the top"
+              aria-label="Back to the top"
+              style={{ backdropFilter: 'blur(14px)' }}
+            >
+              <ArrowUpToLine className="h-4 w-4 flex-shrink-0" />
+              <span className="pointer-events-none absolute left-12 whitespace-nowrap rounded-lg border px-2.5 py-1.5 text-xs font-semibold text-indigo-100 opacity-0 shadow-2xl transition-opacity duration-200 group-hover:opacity-100" style={{ background: '#11111a', borderColor: '#252538' }}>
+                Back to the top
+              </span>
+            </motion.button>
+          ) : null}
         </div>
-
-        {/* ── RIGHT SIDEBAR: Activity Log ── */}
-        <aside
-          className="w-72 flex-shrink-0 flex flex-col border-l overflow-hidden"
-          style={{ background: '#0e0e17', borderColor: '#1c1c2a' }}
-        >
-          {/* Header */}
-          <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: '#1c1c2a' }}>
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-indigo-400" />
-              <span className="text-white text-sm font-semibold">Activity Log</span>
-            </div>
-            <span className="text-gray-600 text-xs">{activityLog.length} actions</span>
-          </div>
-
-          {/* Current lead quick info */}
-          {!isDone && (
-            <div className="px-4 py-3 border-b mx-3 mt-3 rounded-xl" style={{ background: '#13131a', border: '1px solid #1f1f2e' }}>
-              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1.5">Current Lead</p>
-              <p className="text-white font-semibold text-sm truncate">{currentLead.name}</p>
-              <p className="text-gray-400 text-xs truncate">{currentLead.company}</p>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-indigo-400 text-xs font-semibold">{currentLead.industry}</span>
-                <span className="text-gray-500 text-xs">Score: {currentLead.score ?? 0}</span>
-              </div>
-              <button
-                onClick={() => openLeadHistory(currentLead.id)}
-                className="mt-2 w-full rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-2 py-1.5 text-xs font-semibold text-indigo-300 transition-colors hover:bg-indigo-500/20"
-              >
-                View History
-              </button>
-            </div>
-          )}
-
-          {/* Activity items */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
-            <AnimatePresence initial={false}>
-              {activityLog.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center py-10">
-                  <Zap className="w-8 h-8 text-gray-700 mb-3" />
-                  <p className="text-gray-600 text-xs">Actions will appear here</p>
-                  <p className="text-gray-700 text-xs mt-1">Press a key to get started</p>
-                </div>
-              ) : (
-                activityLog.map((item) => {
-                  const meta = actionMeta[item.action];
-                  const Icon = meta.Icon;
-                  return (
-                    <motion.button
-                      type="button"
-                      key={item.id}
-                      initial={{ opacity: 0, x: 20, height: 0 }}
-                      animate={{ opacity: 1, x: 0, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      onClick={() => openLeadHistory(item.leadId)}
-                      className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-transform hover:scale-[1.01] ${meta.bgColor}`}
-                    >
-                      <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${meta.color}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-xs font-medium truncate">{item.leadName}</p>
-                        <p className="text-gray-500 text-xs truncate">{item.company}</p>
-                      </div>
-                      <div className="flex flex-col items-end flex-shrink-0">
-                        <span className={`text-[10px] font-semibold ${meta.color}`}>{meta.label}</span>
-                        <span className="text-gray-600 text-[10px]">{timeAgo(item.timestamp)}</span>
-                      </div>
-                    </motion.button>
-                  );
-                })
-              )}
-            </AnimatePresence>
-          </div>
-        </aside>
       </main>
 
       <CallNoticeToast notice={callNotice} />
-
-      {leads.length > 0 && currentIndex > 0 ? (
-        <motion.button
-          type="button"
-          onClick={jumpToFirstLead}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          className="group fixed bottom-20 left-6 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-500/15 text-indigo-100 shadow-2xl transition-all duration-200 hover:w-36 hover:bg-indigo-500/25"
-          title="Back to the top"
-          aria-label="Back to the top"
-          style={{ backdropFilter: 'blur(14px)' }}
-        >
-          <ArrowUpToLine className="h-4 w-4 flex-shrink-0 transition-transform duration-200 group-hover:-translate-x-10" />
-          <span className="absolute left-10 whitespace-nowrap text-xs font-semibold opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-            Back to the top
-          </span>
-        </motion.button>
-      ) : null}
 
       {/* ── BOTTOM KEYBOARD LEGEND ── */}
       <footer
