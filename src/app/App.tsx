@@ -7,14 +7,18 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
+  Crown,
+  LogOut,
   Mail,
   Phone,
   Plus,
   RefreshCw,
   Search,
+  Settings,
   SkipForward,
   Trash2,
   Unplug,
+  UserCog,
   Upload,
   Users,
   Voicemail,
@@ -84,6 +88,20 @@ interface CrmSyncResult {
   skipped: number;
   failed: number;
   errors: string[];
+}
+
+type BillingPlan = 'free' | 'individual' | 'team';
+type BillingStatus = 'free' | 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired' | 'paused';
+type BillingAction = 'individual' | 'team' | 'portal';
+
+interface BillingProfile {
+  user_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  plan: BillingPlan;
+  status: BillingStatus;
+  price_id: string | null;
+  current_period_end: string | null;
 }
 
 type LeadImportField =
@@ -495,6 +513,8 @@ export default function App() {
   const [showEmailModal, setShowEmailModal]   = useState(false);
   const [showLeadSearch, setShowLeadSearch] = useState(false);
   const [isActivityLogCollapsed, setIsActivityLogCollapsed] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [settingsPlaceholder, setSettingsPlaceholder] = useState<'account' | 'upgrade' | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingLead, setDeletingLead] = useState(false);
   const [creatingLead, setCreatingLead] = useState(false);
@@ -519,6 +539,10 @@ export default function App() {
   const [crmAction, setCrmAction] = useState<'connect' | 'import' | 'export' | 'sync' | 'disconnect' | null>(null);
   const [crmError, setCrmError] = useState('');
   const [crmResult, setCrmResult] = useState<CrmSyncResult | null>(null);
+  const [billingProfile, setBillingProfile] = useState<BillingProfile | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingAction, setBillingAction] = useState<BillingAction | null>(null);
+  const [billingError, setBillingError] = useState('');
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvRows, setCsvRows] = useState<CsvPreviewRow[]>([]);
   const [csvPreviewRows, setCsvPreviewRows] = useState<CsvPreviewRow[]>([]);
@@ -789,6 +813,62 @@ export default function App() {
     }
   }, [fetchLeads, loadCrmStatus]);
 
+  const loadBillingStatus = useCallback(async () => {
+    if (!session) {
+      setBillingProfile(null);
+      return;
+    }
+
+    setBillingLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('billing_profiles')
+        .select('user_id, stripe_customer_id, stripe_subscription_id, plan, status, price_id, current_period_end')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      setBillingProfile((data as BillingProfile | null) ?? null);
+    } catch (error) {
+      console.error('Error loading billing status:', error);
+      setBillingError(error instanceof Error ? error.message : 'Failed to load billing status.');
+    } finally {
+      setBillingLoading(false);
+    }
+  }, [session]);
+
+  const startStripeCheckout = useCallback(async (plan: Exclude<BillingPlan, 'free'>) => {
+    setBillingAction(plan);
+    setBillingError('');
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-create-checkout-session', {
+        body: { plan },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error('Stripe Checkout URL was not returned.');
+      window.location.href = data.url;
+    } catch (error) {
+      setBillingError(error instanceof Error ? error.message : 'Failed to start Stripe Checkout.');
+      setBillingAction(null);
+    }
+  }, []);
+
+  const openStripePortal = useCallback(async () => {
+    setBillingAction('portal');
+    setBillingError('');
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-create-portal-session', {
+        body: {},
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error('Stripe Customer Portal URL was not returned.');
+      window.location.href = data.url;
+    } catch (error) {
+      setBillingError(error instanceof Error ? error.message : 'Failed to open Stripe Customer Portal.');
+      setBillingAction(null);
+    }
+  }, []);
+
   const handleLogout = useCallback(async () => {
     if (session) {
       setStoredActiveLeadId(session.user.id, null);
@@ -799,6 +879,11 @@ export default function App() {
     setCurrentIndex(0);
     setActivityLog([]);
     setStatsCount({ connected: 0, lost: 0, voicemail: 0, next: 0 });
+    setShowSettingsMenu(false);
+    setSettingsPlaceholder(null);
+    setBillingProfile(null);
+    setBillingError('');
+    setBillingAction(null);
   }, [session]);
   // ── Fetch leads from Supabase ───────────────────────────────────────
 
@@ -822,6 +907,7 @@ export default function App() {
     if (session) {
       fetchLeads();
       void loadCrmStatus();
+      void loadBillingStatus();
     } else {
       setLeads([]);
       setCurrentIndex(0);
@@ -829,8 +915,11 @@ export default function App() {
       currentLeadIdRef.current = null;
       setCrmConnection(null);
       setCrmLastRun(null);
+      setBillingProfile(null);
+      setBillingError('');
+      setBillingAction(null);
     }
-  }, [fetchLeads, loadCrmStatus, session]);
+  }, [fetchLeads, loadBillingStatus, loadCrmStatus, session]);
 
   useEffect(() => {
     currentIndexRef.current = currentIndex;
@@ -1056,7 +1145,8 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const hubspotStatus = params.get('hubspot');
-    if (!hubspotStatus) return;
+    const billingStatus = params.get('billing');
+    if (!hubspotStatus && !billingStatus) return;
 
     if (hubspotStatus === 'connected') {
       showCallNoticeMessage({ kind: 'success', message: 'HubSpot connected.' });
@@ -1065,8 +1155,15 @@ export default function App() {
       showCallNoticeMessage({ kind: 'error', message: params.get('message') ?? 'HubSpot connection failed.' });
     }
 
+    if (billingStatus === 'success') {
+      showCallNoticeMessage({ kind: 'success', message: 'Stripe checkout complete. Updating billing status...' });
+      void loadBillingStatus();
+    } else if (billingStatus === 'cancelled') {
+      showCallNoticeMessage({ kind: 'error', message: 'Stripe checkout was cancelled.' });
+    }
+
     navigate(location.pathname, { replace: true });
-  }, [loadCrmStatus, location.pathname, location.search, navigate, showCallNoticeMessage]);
+  }, [loadBillingStatus, loadCrmStatus, location.pathname, location.search, navigate, showCallNoticeMessage]);
 
   useEffect(() => {
     return () => {
@@ -1301,6 +1398,252 @@ export default function App() {
     ? leads.filter((lead) => `${lead.name} ${lead.company} ${lead.title} ${lead.email} ${lead.phone}`.toLowerCase().includes(normalizedLeadSearchQuery)).length
     : 0;
   const crmBusy = crmAction !== null || crmLoading;
+  const billingBusy = billingAction !== null || billingLoading;
+  const paidBillingStatuses: BillingStatus[] = ['active', 'trialing', 'past_due'];
+  const currentBillingPlan = billingProfile && paidBillingStatuses.includes(billingProfile.status) ? billingProfile.plan : 'free';
+  const currentBillingStatus = billingProfile?.status ?? 'free';
+  const billingStatusLabel = currentBillingStatus.replace(/_/g, ' ');
+  const billingPeriodEnd = billingProfile?.current_period_end
+    ? new Date(billingProfile.current_period_end).toLocaleDateString()
+    : null;
+  const settingsMenu = (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setShowSettingsMenu((value) => !value)}
+        className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
+        style={{ background: '#1f2937', border: '1px solid #374151' }}
+        aria-haspopup="menu"
+        aria-expanded={showSettingsMenu}
+      >
+        <Settings className="w-4 h-4" />
+        Settings
+      </button>
+      <AnimatePresence>
+        {showSettingsMenu ? (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.14 }}
+            className="absolute right-0 top-10 z-50 w-56 rounded-2xl border p-2 shadow-2xl"
+            style={{ background: '#11111a', borderColor: '#252538' }}
+            role="menu"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsPlaceholder('account');
+                setShowSettingsMenu(false);
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-gray-200 transition-colors hover:bg-white/5"
+              role="menuitem"
+            >
+              <UserCog className="h-4 w-4 text-indigo-300" />
+              Account Settings
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsPlaceholder('upgrade');
+                setShowSettingsMenu(false);
+                void loadBillingStatus();
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-gray-200 transition-colors hover:bg-white/5"
+              role="menuitem"
+            >
+              <Crown className="h-4 w-4 text-amber-300" />
+              Upgrade Account
+            </button>
+            <div className="my-1 h-px bg-white/10" />
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-rose-200 transition-colors hover:bg-rose-500/10"
+              role="menuitem"
+            >
+              <LogOut className="h-4 w-4 text-rose-300" />
+              Logout
+            </button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+  const settingsPlaceholderModal = (
+    <AnimatePresence>
+      {settingsPlaceholder ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.7)' }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setSettingsPlaceholder(null);
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 14 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 14 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+            className={`w-full rounded-3xl border p-6 ${settingsPlaceholder === 'upgrade' ? 'max-w-4xl' : 'max-w-md'}`}
+            style={{ background: '#11111a', borderColor: '#252538' }}
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-gray-500">
+                  {settingsPlaceholder === 'account' ? 'Account' : 'Plan'}
+                </p>
+                <h3 className="mt-1 text-lg font-semibold text-white">
+                  {settingsPlaceholder === 'account' ? 'Account Settings' : 'Upgrade Account'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSettingsPlaceholder(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+                aria-label="Close settings placeholder"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {settingsPlaceholder === 'account' ? (
+              <>
+                <div className="rounded-2xl border p-4" style={{ background: '#0d0d14', borderColor: '#1f1f2e' }}>
+                  <p className="text-sm text-gray-300">
+                    Placeholder UI for profile details, password controls, notification preferences, and connected account settings.
+                  </p>
+                </div>
+                <div className="mt-5 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setSettingsPlaceholder(null)}
+                    className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border p-4 md:grid-cols-[1fr_auto]" style={{ background: '#0d0d14', borderColor: '#1f1f2e' }}>
+                  <div>
+                    <p className="text-sm font-semibold text-white">Current plan: {currentBillingPlan === 'free' ? 'Free' : currentBillingPlan === 'individual' ? 'Individual' : 'Team'}</p>
+                    <p className="mt-1 text-xs capitalize text-gray-500">
+                      Status: {billingStatusLabel}{billingPeriodEnd ? ` · Renews/ends ${billingPeriodEnd}` : ''}
+                    </p>
+                  </div>
+                  {billingProfile?.stripe_customer_id ? (
+                    <button
+                      type="button"
+                      onClick={() => void openStripePortal()}
+                      disabled={billingBusy}
+                      className="rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-2 text-sm font-semibold text-indigo-200 transition-colors hover:bg-indigo-500/20 disabled:opacity-60"
+                    >
+                      {billingAction === 'portal' ? 'Opening...' : 'Manage billing'}
+                    </button>
+                  ) : null}
+                </div>
+
+                {billingError ? (
+                  <div className="mb-4 rounded-xl border px-4 py-3 text-sm text-rose-300" style={{ background: '#2a1117', borderColor: '#5a1f2b' }}>
+                    {billingError}
+                  </div>
+                ) : null}
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="rounded-2xl border p-4" style={{ background: '#0d0d14', borderColor: currentBillingPlan === 'free' ? '#6366f1' : '#1f1f2e' }}>
+                    <p className="text-xs uppercase tracking-wider text-gray-500">Free</p>
+                    <h4 className="mt-2 text-lg font-semibold text-white">$0</h4>
+                    <p className="mt-2 text-sm text-gray-400">Basic access for trying Swipr with your own leads.</p>
+                    <ul className="mt-4 space-y-2 text-xs text-gray-400">
+                      <li>Lead rolodex workflow</li>
+                      <li>CSV import</li>
+                      <li>Local activity review</li>
+                    </ul>
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-5 w-full rounded-xl border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-500"
+                    >
+                      {currentBillingPlan === 'free' ? 'Current plan' : 'Included'}
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl border p-4" style={{ background: '#101322', borderColor: currentBillingPlan === 'individual' ? '#6366f1' : '#29304a' }}>
+                    <p className="text-xs uppercase tracking-wider text-indigo-300">Individual</p>
+                    <h4 className="mt-2 text-lg font-semibold text-white">$15 USD / month</h4>
+                    <p className="mt-2 text-sm text-gray-400">For one user who wants tracked billing and full CRM workflow access.</p>
+                    <ul className="mt-4 space-y-2 text-xs text-gray-400">
+                      <li>Persistent activity history</li>
+                      <li>CRM integrations</li>
+                      <li>Billing managed by Stripe</li>
+                    </ul>
+                    {currentBillingPlan === 'individual' ? (
+                      <button
+                        type="button"
+                        onClick={() => void openStripePortal()}
+                        disabled={billingBusy}
+                        className="mt-5 w-full rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                      >
+                        {billingAction === 'portal' ? 'Opening...' : 'Manage plan'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void startStripeCheckout('individual')}
+                        disabled={billingBusy}
+                        className="mt-5 w-full rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                      >
+                        {billingAction === 'individual' ? 'Opening Checkout...' : 'Subscribe'}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border p-4" style={{ background: '#17120a', borderColor: currentBillingPlan === 'team' ? '#f59e0b' : '#3a2b13' }}>
+                    <p className="text-xs uppercase tracking-wider text-amber-300">Team</p>
+                    <h4 className="mt-2 text-lg font-semibold text-white">$12 USD / month / seat</h4>
+                    <p className="mt-2 text-sm text-gray-400">For teams that need shared account billing and higher usage capacity.</p>
+                    <ul className="mt-4 space-y-2 text-xs text-gray-400">
+                      <li>Team-ready billing</li>
+                      <li>Higher limits placeholder</li>
+                      <li>Stripe portal management</li>
+                    </ul>
+                    {currentBillingPlan === 'team' ? (
+                      <button
+                        type="button"
+                        onClick={() => void openStripePortal()}
+                        disabled={billingBusy}
+                        className="mt-5 w-full rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-amber-400 disabled:opacity-60"
+                      >
+                        {billingAction === 'portal' ? 'Opening...' : 'Manage plan'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void startStripeCheckout('team')}
+                        disabled={billingBusy}
+                        className="mt-5 w-full rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-amber-400 disabled:opacity-60"
+                      >
+                        {billingAction === 'team' ? 'Opening Checkout...' : 'Subscribe'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <p className="mt-4 text-xs text-gray-500">
+                  Payment, invoices, cancellations, and card updates are handled securely by Stripe. Swipr updates your plan after Stripe confirms the subscription by webhook.
+                </p>
+              </>
+            )}
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
   const crmModal = (
     <AnimatePresence>
       {showCrmModal ? (
@@ -1573,13 +1916,7 @@ export default function App() {
               <Download className="w-4 h-4" />
               Import Leads
             </button>
-            <button
-              onClick={handleLogout}
-              className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
-              style={{ background: '#1f2937', border: '1px solid #374151' }}
-            >
-              Logout
-            </button>
+            {settingsMenu}
           </div>
         </header>
         <main className="flex-1 flex items-center justify-center px-6 text-center">
@@ -1710,6 +2047,7 @@ export default function App() {
           )}
         </AnimatePresence>
         {crmModal}
+        {settingsPlaceholderModal}
       </div>
     );
   }
@@ -1896,13 +2234,7 @@ export default function App() {
             <Download className="w-4 h-4" />
             Import Leads
           </button>
-          <button
-            onClick={handleLogout}
-            className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors"
-            style={{ background: '#1f2937', border: '1px solid #374151' }}
-          >
-            Logout
-          </button>
+          {settingsMenu}
         </div>
       </header>
 
@@ -1910,7 +2242,13 @@ export default function App() {
       <main className="flex-1 flex overflow-hidden min-h-0">
 
         {/* ── CENTER: Rolodex ── */}
-        <div className="order-3 flex-1 flex flex-col items-center justify-center py-4 relative">
+        <div
+          className="order-3 flex-1 flex flex-col items-center justify-center py-4 relative"
+          style={{
+            transform: `translateX(-${isActivityLogCollapsed ? 24 : 168}px)`,
+            transition: 'transform 220ms ease',
+          }}
+        >
           {isDone ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -2501,6 +2839,7 @@ export default function App() {
         )}
       </AnimatePresence>
       {crmModal}
+      {settingsPlaceholderModal}
     </div>
   );
 }
