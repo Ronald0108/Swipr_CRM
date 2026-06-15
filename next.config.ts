@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: ['ws', 'bufferutil', 'utf-8-validate'],
+  turbopack: {},
 };
 
 export default nextConfig;
