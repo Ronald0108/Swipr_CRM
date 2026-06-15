@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect } from 'react';
 import {
   Award,
@@ -51,15 +50,15 @@ const SHORTCUT_KEYS: {
   key: string; label: string; action: AnyAction;
   color: string; bg: string;
 }[] = [
-  { key: 'Q', label: 'Voicemail', action: 'voicemail', color: 'text-amber-400',   bg: 'border-amber-500/40 bg-amber-500/10'   },
-  { key: 'A', label: 'Lost',      action: 'lost',      color: 'text-rose-400',    bg: 'border-rose-500/40 bg-rose-500/10'     },
-  { key: 'D', label: 'Connected', action: 'connected', color: 'text-emerald-400', bg: 'border-emerald-500/40 bg-emerald-500/10'},
-  { key: 'R', label: 'Next',      action: 'next',      color: 'text-sky-400',     bg: 'border-sky-500/40 bg-sky-500/10'       },
-  { key: 'T', label: 'Previous',  action: 'previous',  color: 'text-gray-300',    bg: 'border-gray-500/40 bg-gray-500/10'     },
-  { key: 'C', label: 'Call',      action: 'call',      color: 'text-blue-400',    bg: 'border-blue-500/40 bg-blue-500/10'     },
-  { key: 'E', label: 'Notes',     action: 'notes',     color: 'text-yellow-300',  bg: 'border-yellow-500/40 bg-yellow-500/10' },
-  { key: 'X', label: 'Email',     action: 'email',     color: 'text-purple-400',  bg: 'border-purple-500/40 bg-purple-500/10' },
-];
+    { key: 'Q', label: 'Voicemail', action: 'voicemail', color: 'text-amber-400', bg: 'border-amber-500/40 bg-amber-500/10' },
+    { key: 'A', label: 'Lost', action: 'lost', color: 'text-rose-400', bg: 'border-rose-500/40 bg-rose-500/10' },
+    { key: 'D', label: 'Connected', action: 'connected', color: 'text-emerald-400', bg: 'border-emerald-500/40 bg-emerald-500/10' },
+    { key: 'R', label: 'Next', action: 'next', color: 'text-sky-400', bg: 'border-sky-500/40 bg-sky-500/10' },
+    { key: 'T', label: 'Previous', action: 'previous', color: 'text-gray-300', bg: 'border-gray-500/40 bg-gray-500/10' },
+    { key: 'C', label: 'Call', action: 'call', color: 'text-blue-400', bg: 'border-blue-500/40 bg-blue-500/10' },
+    { key: 'E', label: 'Notes', action: 'notes', color: 'text-yellow-300', bg: 'border-yellow-500/40 bg-yellow-500/10' },
+    { key: 'X', label: 'Email', action: 'email', color: 'text-purple-400', bg: 'border-purple-500/40 bg-purple-500/10' },
+  ];
 
 // ── CallNotice Toast ──────────────────────────────────────────────────────
 function CallNoticeToast({ notice }: { notice: { kind: 'success' | 'error'; message: string } | null }) {
@@ -74,11 +73,10 @@ function CallNoticeToast({ notice }: { notice: { kind: 'success' | 'error'; mess
           transition={{ duration: 0.16 }}
           role="status"
           aria-live="polite"
-          className={`fixed right-5 top-5 z-[70] rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl ${
-            notice.kind === 'success'
+          className={`fixed right-5 top-5 z-[70] rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl ${notice.kind === 'success'
               ? 'border-blue-400/30 bg-blue-500/20 text-blue-100'
               : 'border-rose-400/30 bg-rose-500/20 text-rose-100'
-          }`}
+            }`}
           style={{ backdropFilter: 'blur(16px)' }}
         >
           {notice.message}
@@ -116,8 +114,8 @@ export default function HomePage() {
     getLeadStatusLabel, openLeadHistory, currentLeadIdRef,
   } = app;
 
-  const total     = leads.length;
-  const progress  = total > 0 ? (currentIndex / total) * 100 : 0;
+  const total = leads.length;
+  const progress = total > 0 ? (currentIndex / total) * 100 : 0;
   const remaining = Math.max(0, total - currentIndex);
   const currentLeadPosition = total > 0 ? Math.min(currentIndex + 1, total) : 0;
 
@@ -127,7 +125,7 @@ export default function HomePage() {
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (e.deltaY > 20)       navigateNext();
+      if (e.deltaY > 20) navigateNext();
       else if (e.deltaY < -20) navigatePrev();
     };
     el.addEventListener('wheel', onWheel, { passive: false });
@@ -142,19 +140,19 @@ export default function HomePage() {
       const noModal = !showNotesModal && !showEmailModal;
 
       if (noModal && e.key === 'ArrowDown') { e.preventDefault(); navigateNext(); return; }
-      if (noModal && e.key === 'ArrowUp')   { e.preventDefault(); navigatePrev(); return; }
+      if (noModal && e.key === 'ArrowUp') { e.preventDefault(); navigatePrev(); return; }
       if (e.key === 'Enter' && noModal && currentLead) { e.preventDefault(); openLeadHistory(currentLead.id); return; }
 
-      const key    = e.key.toLowerCase();
+      const key = e.key.toLowerCase();
       const action = KEY_ACTIONS[key];
       if (!action) return;
 
       setPressedKey(key.toUpperCase());
       setTimeout(() => setPressedKey(null), 300);
 
-      if (action === 'notes')         { if (noModal) setShowNotesModal(true); }
-      else if (action === 'email')    { if (noModal) promptLeadEmail(currentLead); }
-      else if (action === 'call')     { if (noModal) promptLeadCall(currentLead); }
+      if (action === 'notes') { if (noModal) setShowNotesModal(true); }
+      else if (action === 'email') { if (noModal) promptLeadEmail(currentLead); }
+      else if (action === 'call') { if (noModal) promptLeadCall(currentLead); }
       else if (action === 'previous') { if (noModal) navigatePrev(); }
       else { if (noModal) triggerSwipeAction(action as SwipeAction); }
     };
@@ -411,9 +409,9 @@ export default function HomePage() {
         <div className="flex items-center gap-2">
           {([
             { icon: CheckCircle, count: statsCount.connected, color: 'text-emerald-400', label: 'Connected' },
-            { icon: XCircle,     count: statsCount.lost,      color: 'text-rose-400',    label: 'Lost'      },
-            { icon: Voicemail,   count: statsCount.voicemail, color: 'text-amber-400',   label: 'Voicemail' },
-            { icon: SkipForward, count: statsCount.next,      color: 'text-sky-400',     label: 'Skipped'   },
+            { icon: XCircle, count: statsCount.lost, color: 'text-rose-400', label: 'Lost' },
+            { icon: Voicemail, count: statsCount.voicemail, color: 'text-amber-400', label: 'Voicemail' },
+            { icon: SkipForward, count: statsCount.next, color: 'text-sky-400', label: 'Skipped' },
           ] as const).map(({ icon: Icon, count, color, label }) => (
             <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: '#13131a', border: '1px solid #1c1c2a' }}>
               <Icon className={`w-3.5 h-3.5 ${color}`} />
@@ -599,9 +597,9 @@ export default function HomePage() {
             <motion.button key={key} animate={isPressed ? { scale: 0.88, y: -2 } : { scale: 1, y: 0 }} transition={{ duration: 0.1 }}
               onClick={() => {
                 setPressedKey(key); setTimeout(() => setPressedKey(null), 300);
-                if (action === 'notes')         setShowNotesModal(true);
-                else if (action === 'email')    promptLeadEmail(currentLead);
-                else if (action === 'call')     promptLeadCall(currentLead);
+                if (action === 'notes') setShowNotesModal(true);
+                else if (action === 'email') promptLeadEmail(currentLead);
+                else if (action === 'call') promptLeadCall(currentLead);
                 else if (action === 'previous') navigatePrev();
                 else if (!isDone) triggerSwipeAction(action as SwipeAction);
               }}
