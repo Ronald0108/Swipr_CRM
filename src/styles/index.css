@@ -34,6 +34,17 @@
     #ede9ff 70%,
     #d8ccff 100%
   );
+  transition: background 0.3s ease;
+}
+
+.dark .landing-hero-gradient {
+  background: linear-gradient(
+    180deg,
+    #0a0a0f 0%,
+    #0d0c18 45%,
+    #131024 75%,
+    #1d163a 100%
+  );
 }
 
 .landing-cloud-bg {
@@ -119,4 +130,10 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(20px);
+}
+
+.dark .landing-nav.scrolled {
+  background-color: rgba(10, 10, 15, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }

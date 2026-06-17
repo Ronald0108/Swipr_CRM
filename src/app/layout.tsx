@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@/styles/index.css';
+import { ThemeProvider } from '@/app/components/ThemeProviderWrapper';
 
 export const metadata: Metadata = {
   title: 'SwiprCRM — High-velocity lead sorting for your sales team',
@@ -13,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" style={{ scrollBehavior: 'smooth' }}>
+    <html lang="en" style={{ scrollBehavior: 'smooth' }} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -27,7 +28,9 @@ export default function RootLayout({
         />
       </head>
       <body style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
