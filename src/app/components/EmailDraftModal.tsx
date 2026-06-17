@@ -146,18 +146,18 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-            className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="w-full max-w-2xl bg-white dark:bg-[#11111a] rounded-2xl shadow-2xl dark:shadow-none dark:border dark:border-[#1f1f2e] overflow-hidden"
             onKeyDown={handleKeyDown}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#1f1f2e]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                  <Mail className="w-4 h-4 text-purple-600" />
+                <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center">
+                  <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-gray-900 font-semibold">Draft Email</h3>
-                  <p className="text-gray-400 text-xs">To: {lead.email}</p>
+                  <h3 className="text-gray-900 dark:text-white font-semibold">Draft Email</h3>
+                  <p className="text-gray-400 dark:text-gray-500 text-xs">To: {lead.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
                 <div className="relative">
                   <button
                     onClick={() => setShowTemplateMenu(!showTemplateMenu)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-xs text-gray-600 font-medium"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-[#1a1a24] hover:bg-gray-200 dark:hover:bg-[#2a2a3a] transition-colors text-xs text-gray-600 dark:text-gray-400 font-medium"
                   >
                     Template
                     <ChevronDown className="w-3 h-3" />
@@ -177,14 +177,14 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-10 w-36"
+                        className="absolute right-0 top-full mt-1 bg-white dark:bg-[#13131a] rounded-xl shadow-xl border border-gray-100 dark:border-[#1f1f2e] overflow-hidden z-10 w-36"
                       >
                         {TEMPLATES.map((t) => (
                           <button
                             key={t.id}
                             onClick={() => selectTemplate(t.id)}
-                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-purple-50 transition-colors ${
-                              template === t.id ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-700'
+                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors ${
+                              template === t.id ? 'text-purple-600 dark:text-purple-400 font-medium bg-purple-50 dark:bg-purple-500/10' : 'text-gray-700 dark:text-gray-300'
                             }`}
                           >
                             {t.label}
@@ -196,22 +196,22 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a24] flex items-center justify-center transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 </button>
               </div>
             </div>
 
             {/* Subject */}
-            <div className="px-6 pt-4 pb-2 border-b border-gray-100">
+            <div className="px-6 pt-4 pb-2 border-b border-gray-100 dark:border-[#1f1f2e]">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider w-14">Subject</span>
+                <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider w-14">Subject</span>
                 <input
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="flex-1 text-sm text-gray-800 bg-transparent focus:outline-none placeholder-gray-300"
+                  className="flex-1 text-sm text-gray-800 dark:text-gray-200 bg-transparent focus:outline-none placeholder-gray-300 dark:placeholder-gray-600"
                   placeholder="Email subject..."
                 />
               </div>
@@ -222,19 +222,19 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
               <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                className="w-full h-64 resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all font-mono leading-relaxed"
+                className="w-full h-64 resize-none rounded-xl border border-gray-200 dark:border-[#2a2a3a] bg-gray-50 dark:bg-[#0a0a0f] px-4 py-3 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all font-mono leading-relaxed"
                 placeholder="Write your email..."
               />
             </div>
 
             {/* Footer */}
             <div className="px-6 pb-5 flex items-center justify-between">
-              <span className="text-xs text-gray-400">Esc to close · Cmd/Ctrl + Enter to send</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">Esc to close · Cmd/Ctrl + Enter to send</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSaveDraft}
                   className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-                    draftSaved ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    draftSaved ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-[#1a1a24] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#2a2a3a]'
                   }`}
                 >
                   {draftSaved ? 'Draft Saved' : 'Save Draft'}

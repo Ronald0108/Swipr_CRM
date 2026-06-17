@@ -8,24 +8,9 @@ import { NotesModal } from '@/app/components/NotesModal';
 import { EmailDraftModal } from '@/app/components/EmailDraftModal';
 import { useApp, actionMeta, timeAgo } from '@/app/providers';
 import type { ActivityFilter } from '@/app/types/activity';
+import { CallNoticeToast } from '@/app/components/CallNoticeToast';
 
-function CallNoticeToast({ notice }: { notice: { kind: 'success' | 'error'; message: string } | null }) {
-  if (!notice) return null;
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className={`fixed right-5 top-5 z-[70] rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl ${
-        notice.kind === 'success'
-          ? 'border-blue-400/30 bg-blue-500/20 text-blue-100'
-          : 'border-rose-400/30 bg-rose-500/20 text-rose-100'
-      }`}
-      style={{ backdropFilter: 'blur(16px)' }}
-    >
-      {notice.message}
-    </div>
-  );
-}
+
 
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -56,7 +41,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             onClick={() => router.push('/dashboard')}
             className="mt-5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
           >
-            Return to Scroll Page
+            Return to Dashboard
           </button>
         </div>
       </div>
@@ -69,10 +54,10 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     <div className="h-screen w-screen overflow-hidden flex flex-col" style={{ background: '#0a0a0f' }}>
       <header className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: '#1c1c2a' }}>
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/dashboard')}
           className="rounded-xl border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-white/5"
         >
-          Return to Scroll Page
+          Return to Dashboard
         </button>
         <div className="text-right">
           <p className="text-white text-sm font-semibold">{detailLead.name}</p>

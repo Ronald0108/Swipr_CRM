@@ -8,6 +8,12 @@ export const metadata: Metadata = {
     'A keyboard-centric interface for sorting your leads. Flow state prospecting that turns lead management into a high-velocity workflow.',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: {

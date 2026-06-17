@@ -142,9 +142,9 @@ function EditableField({
 function StatusBadge({ label }: { label: string }) {
   const isEmpty = label === 'None';
   return (
-    <div className={`flex-shrink-0 rounded-md border px-2.5 py-1.5 text-right ${isEmpty ? 'border-gray-200 bg-gray-50' : 'border-emerald-200 bg-emerald-50'}`}>
-      <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">Status</p>
-      <p className={`text-xs font-bold ${isEmpty ? 'text-gray-500' : 'text-emerald-700'}`}>{label}</p>
+    <div className={`flex-shrink-0 rounded-md border px-2.5 py-1.5 text-right ${isEmpty ? 'border-gray-200 bg-gray-50 dark:border-[#2a2a3a] dark:bg-[#13131a]' : 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10'}`}>
+      <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Status</p>
+      <p className={`text-xs font-bold ${isEmpty ? 'text-gray-500 dark:text-gray-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{label}</p>
     </div>
   );
 }
@@ -160,7 +160,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
   const [newTagValue, setNewTagValue] = useState('');
 
   return (
-    <div className="relative w-full h-full rounded-3xl bg-white shadow-2xl overflow-hidden select-none">
+    <div className="relative w-full h-full rounded-3xl bg-white dark:bg-[#11111a] shadow-2xl dark:shadow-none dark:border dark:border-[#1f1f2e] overflow-hidden select-none">
 
       {/* ── Company Header (no deal size) ── */}
       <div className={`bg-gradient-to-br ${gradient} px-5 py-3`}>
@@ -188,38 +188,38 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
       </div>
 
       {/* ── Identity (no avatar) ── */}
-      <div className="flex items-start justify-between px-5 py-2 border-b border-gray-100 gap-3">
+      <div className="flex items-start justify-between px-5 py-2 border-b border-gray-100 dark:border-[#1f1f2e] gap-3">
         <div className="flex-1 min-w-0">
           <EditableField
             value={lead.name}
             onSave={v => onEdit('name', v)}
-            displayClassName="text-gray-900 font-bold text-xl leading-tight block"
-            inputClassName="text-gray-900 font-bold text-xl"
+            displayClassName="text-gray-900 dark:text-white font-bold text-xl leading-tight block"
+            inputClassName="text-gray-900 dark:text-white font-bold text-xl"
             disabled={!isActive}
             autoEditToken={autoEditNameToken}
           />
           <EditableField
             value={lead.title}
             onSave={v => onEdit('title', v)}
-            displayClassName="text-gray-500 text-sm block mt-0.5"
-            inputClassName="text-gray-500 text-sm"
+            displayClassName="text-gray-500 dark:text-gray-400 text-sm block mt-0.5"
+            inputClassName="text-gray-500 dark:text-gray-400 text-sm"
             disabled={!isActive}
           />
           <div className="flex items-center gap-1 mt-1 flex-wrap">
-            <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+            <MapPin className="w-3 h-3 text-gray-400 dark:text-gray-500 flex-shrink-0" />
             <EditableField
               value={lead.location}
               onSave={v => onEdit('location', v)}
-              displayClassName="text-gray-400 text-xs"
-              inputClassName="text-gray-400 text-xs"
+              displayClassName="text-gray-400 dark:text-gray-500 text-xs"
+              inputClassName="text-gray-400 dark:text-gray-500 text-xs"
               disabled={!isActive}
             />
-            <span className="text-gray-300 text-xs">·</span>
+            <span className="text-gray-300 dark:text-gray-600 text-xs">·</span>
             <EditableField
               value={lead.timezone}
               onSave={v => onEdit('timezone', v)}
-              displayClassName="text-gray-400 text-xs"
-              inputClassName="text-gray-400 text-xs w-16"
+              displayClassName="text-gray-400 dark:text-gray-500 text-xs"
+              inputClassName="text-gray-400 dark:text-gray-500 text-xs w-16"
               disabled={!isActive}
             />
           </div>
@@ -228,7 +228,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
       </div>
 
       {/* ── Contact Info ── */}
-      <div className="px-5 py-2 border-b border-gray-100 space-y-1.5">
+      <div className="px-5 py-2 border-b border-gray-100 dark:border-[#1f1f2e] space-y-1.5">
         <div className="flex items-center gap-2.5">
           <button
             type="button"
@@ -240,7 +240,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
             aria-label={`Call ${lead.name}`}
             title={canCall ? `Call ${lead.phone}` : 'No phone number available'}
             className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-              canCall ? 'bg-blue-50 hover:bg-blue-100 cursor-pointer' : 'bg-gray-100 cursor-not-allowed opacity-60'
+              canCall ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 cursor-pointer' : 'bg-gray-100 dark:bg-[#1a1a24] cursor-not-allowed opacity-60'
             }`}
           >
             <Phone className="w-3.5 h-3.5 text-blue-600" />
@@ -248,26 +248,26 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
           <EditableField
             value={lead.phone}
             onSave={v => onEdit('phone', v)}
-            displayClassName="text-gray-700 text-sm font-medium flex-1"
-            inputClassName="text-gray-700 text-sm font-medium"
+            displayClassName="text-gray-700 dark:text-gray-300 text-sm font-medium flex-1"
+            inputClassName="text-gray-700 dark:text-gray-300 text-sm font-medium"
             disabled={!isActive}
             placeholder="+1 (555) 000-0000"
           />
           {lead.callAttempts > 0 && (
-            <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full flex-shrink-0">
+            <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-[#1a1a24] px-2 py-0.5 rounded-full flex-shrink-0">
               {lead.callAttempts} attempt{lead.callAttempts !== 1 ? 's' : ''}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
-            <Mail className="w-3.5 h-3.5 text-purple-600" />
+          <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+            <Mail className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
           </div>
           <EditableField
             value={lead.email}
             onSave={v => onEdit('email', v)}
-            displayClassName="text-gray-700 text-sm flex-1 truncate"
-            inputClassName="text-gray-700 text-sm"
+            displayClassName="text-gray-700 dark:text-gray-300 text-sm flex-1 truncate"
+            inputClassName="text-gray-700 dark:text-gray-300 text-sm"
             disabled={!isActive}
             placeholder="email@example.com"
           />
@@ -275,26 +275,26 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
       </div>
 
       {/* ── Stats Row (source + last contact only, no company size) ── */}
-      <div className="px-5 py-2 border-b border-gray-100 flex items-center gap-4">
+      <div className="px-5 py-2 border-b border-gray-100 dark:border-[#1f1f2e] flex items-center gap-4">
         <div className="flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
           <EditableField
             value={lead.source}
             onSave={v => onEdit('source', v)}
-            displayClassName="text-xs text-gray-500"
-            inputClassName="text-xs text-gray-500"
+            displayClassName="text-xs text-gray-500 dark:text-gray-400"
+            inputClassName="text-xs text-gray-500 dark:text-gray-400"
             disabled={!isActive}
             placeholder="Source"
           />
         </div>
-        <div className="h-3 w-px bg-gray-200" />
+        <div className="h-3 w-px bg-gray-200 dark:bg-[#2a2a3a]" />
         <div className="flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
           <EditableField
             value={lead.lastContact}
             onSave={v => onEdit('lastContact', v)}
-            displayClassName="text-xs text-gray-500"
-            inputClassName="text-xs text-gray-500"
+            displayClassName="text-xs text-gray-500 dark:text-gray-400"
+            inputClassName="text-xs text-gray-500 dark:text-gray-400"
             disabled={!isActive}
             placeholder="Last contact"
           />
@@ -302,7 +302,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
         {isActive && onViewHistory && (
           <button
             onClick={onViewHistory}
-            className="ml-auto inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-semibold text-indigo-600 transition-colors hover:bg-indigo-100"
+            className="ml-auto inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 dark:border-indigo-500/40 dark:bg-indigo-500/10 px-2 py-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-300 transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-500/20"
           >
             <History className="h-3 w-3" />
             View History
@@ -312,16 +312,16 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
       
 
       {/* ── Notes ── */}
-      <div className="px-5 py-2 border-b border-gray-100">
+      <div className="px-5 py-2 border-b border-gray-100 dark:border-[#1f1f2e]">
         <div className="flex items-center gap-1.5 mb-1">
           <Zap className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</span>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notes</span>
         </div>
         <EditableField
           value={lead.notes}
           onSave={v => onEdit('notes', v)}
-          displayClassName="text-gray-600 text-sm leading-snug line-clamp-2 block"
-          inputClassName="text-gray-600 text-sm leading-relaxed"
+          displayClassName="text-gray-600 dark:text-gray-300 text-sm leading-snug line-clamp-2 block"
+          inputClassName="text-gray-600 dark:text-gray-300 text-sm leading-relaxed"
           multiline
           disabled={!isActive}
           placeholder="Add notes about this lead..."
@@ -333,15 +333,15 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
         {lead.tags.map((tag, idx) => (
           <span
             key={`${tag}-${idx}`}
-            className="group/tag flex items-center gap-0.5 px-2.5 py-1 rounded-full bg-gray-100"
+            className="group/tag flex items-center gap-0.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-[#1a1a24]"
           >
-            <span className="text-gray-600 text-xs font-medium">{tag}</span>
+            <span className="text-gray-600 dark:text-gray-400 text-xs font-medium">{tag}</span>
             {isActive && (
               <button
                 onClick={() => onEdit('tags', lead.tags.filter((_, i) => i !== idx))}
                 className="ml-0.5 opacity-0 group-hover/tag:opacity-100 transition-opacity"
               >
-                <X className="w-2.5 h-2.5 text-gray-400 hover:text-rose-400" />
+                <X className="w-2.5 h-2.5 text-gray-400 dark:text-gray-500 hover:text-rose-400 dark:hover:text-rose-400" />
               </button>
             )}
           </span>
@@ -364,13 +364,13 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
                 }
                 if (e.key === 'Escape') { setNewTagValue(''); setAddingTag(false); }
               }}
-              className="px-2.5 py-1 rounded-full border border-indigo-300 bg-indigo-50 text-xs text-indigo-600 w-24 focus:outline-none"
+              className="px-2.5 py-1 rounded-full border border-indigo-300 dark:border-indigo-500/40 bg-indigo-50 dark:bg-indigo-500/10 text-xs text-indigo-600 dark:text-indigo-300 w-24 focus:outline-none"
               placeholder="New tag…"
             />
           ) : (
             <button
               onClick={() => setAddingTag(true)}
-              className="px-2.5 py-1 rounded-full border border-dashed border-gray-300 text-gray-400 text-xs hover:bg-gray-50 transition-colors"
+              className="px-2.5 py-1 rounded-full border border-dashed border-gray-300 dark:border-[#2a2a3a] text-gray-400 dark:text-gray-500 text-xs hover:bg-gray-50 dark:hover:bg-[#1a1a24] transition-colors"
             >
               + tag
             </button>

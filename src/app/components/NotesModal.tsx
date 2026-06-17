@@ -53,25 +53,25 @@ export function NotesModal({ lead, isOpen, onClose, onSave }: NotesModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-            className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="w-full max-w-lg bg-white dark:bg-[#11111a] rounded-2xl shadow-2xl dark:shadow-none dark:border dark:border-[#1f1f2e] overflow-hidden"
             onKeyDown={handleKeyDown}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#1f1f2e]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-amber-600" />
+                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-gray-900 font-semibold">Edit Notes</h3>
-                  <p className="text-gray-400 text-xs">{lead.name} · {lead.company}</p>
+                  <h3 className="text-gray-900 dark:text-white font-semibold">Edit Notes</h3>
+                  <p className="text-gray-400 dark:text-gray-500 text-xs">{lead.name} · {lead.company}</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a24] flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4 text-gray-400" />
+                <X className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               </button>
             </div>
 
@@ -81,17 +81,17 @@ export function NotesModal({ lead, isOpen, onClose, onSave }: NotesModalProps) {
                 ref={textareaRef}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full h-48 resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all placeholder-gray-400"
+                className="w-full h-48 resize-none rounded-xl border border-gray-200 dark:border-[#2a2a3a] bg-gray-50 dark:bg-[#0a0a0f] px-4 py-3 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-600"
                 placeholder="Add notes about this lead..."
               />
-              <p className="text-xs text-gray-400 mt-1.5">⌘ + Enter to save · Esc to cancel</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">⌘ + Enter to save · Esc to cancel</p>
             </div>
 
             {/* Footer */}
             <div className="px-6 pb-5 flex items-center justify-end gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-sm text-gray-500 hover:bg-gray-100 transition-colors font-medium"
+                className="px-4 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a24] transition-colors font-medium"
               >
                 Cancel
               </button>
