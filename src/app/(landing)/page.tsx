@@ -224,7 +224,7 @@ export default function LandingPage() {
                 disabled
                 className="text-sm font-semibold bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 px-4 py-2 rounded-lg cursor-not-allowed"
               >
-                Get Started
+                Coming Soon
               </button>
             )}
           </div>
