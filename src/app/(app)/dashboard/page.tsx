@@ -22,9 +22,9 @@ import {
   Zap,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { LeadCard, type SwipeAction } from './components/LeadCard';
-import { NotesModal } from './components/NotesModal';
-import { EmailDraftModal } from './components/EmailDraftModal';
+import { LeadCard, type SwipeAction } from '@/app/components/LeadCard';
+import { NotesModal } from '@/app/components/NotesModal';
+import { EmailDraftModal } from '@/app/components/EmailDraftModal';
 import {
   useApp,
   actionMeta,
@@ -36,8 +36,8 @@ import {
   IMPORTABLE_FIELDS,
   timeAgo,
   LeadImportField,
-} from './providers';
-import type { ActivityType } from './types/activity';
+} from '@/app/providers';
+import type { ActivityType } from '@/app/types/activity';
 
 // ── Shortcut keys ─────────────────────────────────────────────────────────
 type AnyAction = SwipeAction | 'notes' | 'email' | 'call' | 'previous';

@@ -1,13 +1,11 @@
 import type { Metadata } from 'next';
 import '@/styles/index.css';
-import { AppProvider } from './providers';
 
 export const metadata: Metadata = {
-  title: 'Swipr CRM',
-  description: 'A modern CRM for managing and reviewing leads with a swipe-based rolodex interface.',
+  title: 'SwiprCRM — High-velocity lead sorting for your sales team',
+  description:
+    'A keyboard-centric interface for sorting your leads. Flow state prospecting that turns lead management into a high-velocity workflow.',
 };
-
-import { Suspense } from 'react';
 
 export default function RootLayout({
   children,
@@ -15,11 +13,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
-        <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-[#0a0a0f] text-white">Loading...</div>}>
-          <AppProvider>{children}</AppProvider>
-        </Suspense>
+    <html lang="en" style={{ scrollBehavior: 'smooth' }}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+        {children}
       </body>
     </html>
   );

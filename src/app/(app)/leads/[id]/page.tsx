@@ -53,7 +53,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           <p className="text-white text-lg font-semibold">Lead not found</p>
           <p className="text-gray-500 text-sm mt-2">This lead may have been deleted or is unavailable.</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/dashboard')}
             className="mt-5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
           >
             Return to Scroll Page
