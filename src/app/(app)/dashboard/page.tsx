@@ -1,25 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Award,
-  BarChart3,
   CheckCircle,
-  ArrowUpToLine,
   Download,
-  FileSpreadsheet,
   Plus,
   RefreshCw,
-  Search,
   SkipForward,
-  Trash2,
-  Unplug,
-  Upload,
   Users,
   Voicemail,
-  X,
   XCircle,
-  Zap,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { LeadCard, type SwipeAction } from '@/app/components/LeadCard';
@@ -30,18 +21,14 @@ import { ImportModal } from '@/app/components/dashboard/ImportModal';
 import { DeleteConfirmDialog } from '@/app/components/dashboard/DeleteConfirmDialog';
 import {
   useApp,
-  actionMeta,
   CARD_WIDTH,
   CARD_HEIGHT,
   CARD_STRIDE,
   CONTAINER_H,
   CENTER_Y,
-  IMPORTABLE_FIELDS,
-  timeAgo,
-  LeadImportField,
 } from '@/app/providers';
 import { ActivitySidebar } from '@/app/components/dashboard/ActivitySidebar';
-import { KeyboardLegend, KEY_ACTIONS, AnyAction } from '@/app/components/dashboard/KeyboardLegend';
+import { KeyboardLegend, KEY_ACTIONS } from '@/app/components/dashboard/KeyboardLegend';
 import { LeadSearchPanel } from '@/app/components/dashboard/LeadSearchPanel';
 import { StatsBar } from '@/app/components/dashboard/StatsBar';
 import { CallNoticeToast } from '@/app/components/CallNoticeToast';
@@ -51,6 +38,7 @@ import { CallNoticeToast } from '@/app/components/CallNoticeToast';
 // ── Home Page ─────────────────────────────────────────────────────────────
 export default function HomePage() {
   const app = useApp();
+  const [activityCollapsed, setActivityCollapsed] = useState(false);
 
   const {
     session, authLoading, authSubmitting, email, setEmail, password, setPassword, authError,
@@ -65,7 +53,7 @@ export default function HomePage() {
     callNotice, promptLeadCall, promptLeadEmail,
     handleSaveNotes, handleEmailSent,
     leadSearchQuery, setLeadSearchQuery, jumpToLeadSearch, jumpToLeadSearchIndex, leadSearchMatchCount,
-    navigatePrev, navigateNext, jumpToFirstLead, triggerSwipeAction,
+    navigatePrev, navigateNext, triggerSwipeAction,
     overlayInfo, pressedKey, setPressedKey,
     isAnimatingRef, cardAreaRef,
     csvHeaders, csvRows, csvPreviewRows, columnMapping, setColumnMapping,
@@ -75,11 +63,6 @@ export default function HomePage() {
     loadCrmStatus, startHubSpotOAuth, runHubSpotAction,
     getLeadStatusLabel, openLeadHistory, currentLeadIdRef,
   } = app;
-
-  const total = leads.length;
-  const progress = total > 0 ? (currentIndex / total) * 100 : 0;
-  const remaining = Math.max(0, total - currentIndex);
-  const currentLeadPosition = total > 0 ? Math.min(currentIndex + 1, total) : 0;
 
   // ── Wheel event for rolodex scroll ───────────────────────────────────
   useEffect(() => {
@@ -193,7 +176,6 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center">
               <img src="/images/logo_transparent.png" alt="Swipr CRM logo" className="w-full h-full object-cover" />
             </div>
-            <span className="text-white font-bold tracking-tight">Swipr CRM</span>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => void handleCreateLead()} disabled={creatingLead} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-60 bg-[#4f46e5] border-[#6366f1] border">
@@ -236,6 +218,15 @@ export default function HomePage() {
 
       {/* ── MAIN ── */}
       <main className="flex-1 flex overflow-hidden min-h-0">
+        {/* ── LEFT SIDEBAR: Activity Log ── */}
+        <ActivitySidebar collapsed={activityCollapsed} />
+
+        {/* ── Sidebar buttons ── */}
+        <LeadSearchPanel
+          activityCollapsed={activityCollapsed}
+          onToggleActivity={() => setActivityCollapsed((value) => !value)}
+        />
+
         {/* ── CENTER: Rolodex ── */}
         <div className="flex-1 flex flex-col items-center justify-center py-4 relative">
           {isDone ? (
@@ -273,24 +264,24 @@ export default function HomePage() {
             </>
           )}
         </div>
-
-        {/* ── Sidebar buttons ── */}
-        <LeadSearchPanel />
-
-        {/* ── RIGHT SIDEBAR: Activity Log ── */}
-        <ActivitySidebar />
       </main>
 
       <CallNoticeToast notice={callNotice} />
 
-      {leads.length > 0 && currentIndex > 0 ? (
-        <motion.button type="button" onClick={jumpToFirstLead} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-          className="group fixed bottom-20 left-6 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-500/15 text-indigo-100 shadow-2xl transition-all duration-200 hover:w-36 hover:bg-indigo-500/25"
-          title="Back to the top" aria-label="Back to the top" style={{ backdropFilter: 'blur(14px)' }}>
-          <ArrowUpToLine className="h-4 w-4 flex-shrink-0 transition-transform duration-200 group-hover:-translate-x-10" />
-          <span className="absolute left-10 whitespace-nowrap text-xs font-semibold opacity-0 transition-opacity duration-200 group-hover:opacity-100">Back to the top</span>
-        </motion.button>
-      ) : null}
+      <div className="fixed bottom-20 right-5 z-40 flex items-center gap-1.5 rounded-xl border border-[#1c1c2a] bg-[#0e0e17]/95 p-1.5 shadow-2xl" style={{ backdropFilter: 'blur(14px)' }}>
+        {([
+          { icon: CheckCircle, count: statsCount.connected, color: 'text-emerald-400', label: 'Connected' },
+          { icon: XCircle, count: statsCount.lost, color: 'text-rose-400', label: 'Lost' },
+          { icon: Voicemail, count: statsCount.voicemail, color: 'text-amber-400', label: 'Voicemail' },
+          { icon: SkipForward, count: statsCount.next, color: 'text-sky-400', label: 'Skipped' },
+        ] as const).map(({ icon: Icon, count, color, label }) => (
+          <div key={label} className="flex items-center gap-1.5 rounded-lg bg-[#13131a] px-2 py-1.5">
+            <Icon className={`h-3.5 w-3.5 ${color}`} />
+            <span className="text-xs font-semibold text-white">{count}</span>
+            <span className="hidden text-[10px] text-gray-500 sm:inline">{label}</span>
+          </div>
+        ))}
+      </div>
 
       {/* ── BOTTOM KEYBOARD LEGEND ── */}
       <KeyboardLegend />

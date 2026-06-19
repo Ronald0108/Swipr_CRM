@@ -2,6 +2,45 @@
 @import './tailwind.css';
 @import './theme.css';
 
+:root {
+  --sw-bg: #191816;
+  --sw-bg-soft: #211f1c;
+  --sw-rail: #151412;
+  --sw-panel: rgba(255, 252, 244, 0.055);
+  --sw-panel-strong: rgba(255, 252, 244, 0.095);
+  --sw-border: rgba(231, 222, 202, 0.12);
+  --sw-ivory: #f8f1e3;
+  --sw-muted: #948b7c;
+  --sw-gold: #d6b676;
+  --sw-shadow: 0 30px 90px rgba(0, 0, 0, 0.32);
+}
+
+.swipr-workspace {
+  background:
+    radial-gradient(1100px 520px at 55% -10%, rgba(214, 182, 118, 0.16), transparent 58%),
+    radial-gradient(780px 420px at 100% 10%, rgba(108, 122, 137, 0.12), transparent 62%),
+    linear-gradient(135deg, #171614 0%, #201e1b 48%, #151412 100%);
+  color: var(--sw-ivory);
+}
+
+.swipr-panel {
+  border: 1px solid var(--sw-border);
+  border-radius: 28px;
+  background: var(--sw-panel);
+  box-shadow: var(--sw-shadow);
+  backdrop-filter: blur(22px);
+}
+
+.swipr-action-dock {
+  width: min(780px, calc(100vw - 420px));
+  border: 1px solid var(--sw-border);
+  border-radius: 28px;
+  background: rgba(18, 17, 15, 0.82);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+  padding: 12px;
+  backdrop-filter: blur(22px);
+}
+
 .login-gradient-bg {
   background: radial-gradient(
     190% 75% at 50% 0%,
@@ -26,36 +65,26 @@
 
 /* ── Landing Page Styles ────────────────────────────────────── */
 
+.landing-framer-page {
+  font-family: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 .landing-hero-gradient {
-  background: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    #f8f7ff 40%,
-    #ede9ff 70%,
-    #d8ccff 100%
-  );
+  background:
+    radial-gradient(190% 75% at 50% 0%, #1d1d1f 31%, #2a2443 63%, #5147e6 88%, #7b61ff 100%),
+    linear-gradient(180deg, #1d1d1f 0%, #17171a 58%, #111113 100%);
   transition: background 0.3s ease;
 }
 
 .dark .landing-hero-gradient {
-  background: linear-gradient(
-    180deg,
-    #0a0a0f 0%,
-    #0d0c18 45%,
-    #131024 75%,
-    #1d163a 100%
-  );
+  background:
+    radial-gradient(190% 75% at 50% 0%, #1d1d1f 31%, #2a2443 63%, #5147e6 88%, #7b61ff 100%),
+    linear-gradient(180deg, #1d1d1f 0%, #17171a 58%, #111113 100%);
 }
 
 .landing-cloud-bg {
   position: relative;
-  background: linear-gradient(
-    180deg,
-    #c4b5fd 0%,
-    #8b5cf6 30%,
-    #6d28d9 60%,
-    #4c1d95 100%
-  );
+  background: transparent;
 }
 
 .landing-cloud-bg::before,
@@ -64,7 +93,7 @@
   position: absolute;
   border-radius: 50%;
   filter: blur(60px);
-  opacity: 0.5;
+  opacity: 0.32;
   pointer-events: none;
 }
 
@@ -73,7 +102,7 @@
   height: 80%;
   top: 10%;
   left: -10%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.6), transparent 70%);
+  background: radial-gradient(circle, rgba(81, 71, 230, 0.42), transparent 70%);
 }
 
 .landing-cloud-bg::after {
@@ -81,7 +110,43 @@
   height: 70%;
   bottom: 0;
   right: -10%;
-  background: radial-gradient(circle, rgba(109, 40, 217, 0.5), transparent 70%);
+  background: radial-gradient(circle, rgba(169, 126, 255, 0.26), transparent 70%);
+}
+
+.landing-waitlist-form {
+  display: flex;
+  width: min(100%, 350px);
+  min-height: 49px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(8, 8, 10, 0.58);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  padding: 4px;
+  backdrop-filter: blur(16px);
+}
+
+.landing-feature-row {
+  display: grid;
+  grid-template-columns: 60px minmax(180px, 0.7fr) minmax(260px, 1.1fr);
+  align-items: center;
+  gap: 28px;
+  min-height: 132px;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 34px 38px;
+}
+
+.landing-login-button {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(14px);
+}
+
+.landing-login-button:hover {
+  background: rgba(255, 255, 255, 0.07);
 }
 
 /* FAQ Accordion */
@@ -116,7 +181,7 @@
 
 .pricing-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 50px -12px rgba(139, 92, 246, 0.15);
+  box-shadow: 0 22px 60px -24px rgba(29, 29, 31, 0.28);
 }
 
 /* Nav scroll effect */
@@ -126,14 +191,35 @@
 }
 
 .landing-nav.scrolled {
-  background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background-color: rgba(29, 29, 31, 0.76);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(20px);
 }
 
 .dark .landing-nav.scrolled {
-  background-color: rgba(10, 10, 15, 0.95);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  background-color: rgba(29, 29, 31, 0.76);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.14);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 809.98px) {
+  .landing-hero-gradient {
+    background:
+      radial-gradient(276% 105% at 50% 0%, #1d1d1f 31%, #2a2443 58%, #5147e6 80%, #7b61ff 100%),
+      linear-gradient(180deg, #1d1d1f 0%, #17171a 58%, #111113 100%);
+  }
+
+  .landing-feature-row {
+    display: flex;
+    min-height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 28px;
+  }
+
+  .landing-feature-row p {
+    margin-left: 0;
+  }
 }

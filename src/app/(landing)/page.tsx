@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'motion/react';
 import {
-  ArrowRight,
   Check,
   ChevronDown,
   Keyboard,
@@ -15,10 +14,9 @@ import {
   Linkedin,
 } from 'lucide-react';
 import Link from 'next/link';
-import { ThemeToggle } from '@/app/components/ThemeToggle';
 
 // ── YouTube Video ID from environment variable ───────────────────────────
-const YOUTUBE_VIDEO_ID = process.env.NEXT_PUBLIC_YOUTUBE_VIDEO_ID || '';
+const YOUTUBE_VIDEO_ID = process.env.NEXT_PUBLIC_YOUTUBE_VIDEO_ID || 'pLnb9R_h8cs';
 const SCHEDULE_URL = process.env.NEXT_PUBLIC_SCHEDULE_URL || 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0-ZaHYO1gMxbNE0EFZ_4yxqFxDisi8n0vIWLwqQO03WAuOaBSaZnR8f1EcOFbygIjQ14iIwNrL';
 const ENABLE_SUBSCRIPTIONS = process.env.NEXT_PUBLIC_ENABLE_SUBSCRIPTIONS === 'true';
 
@@ -90,22 +88,22 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-800 last:border-b-0">
+    <div className="border-b border-[#e7e7e7] last:border-b-0">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-5 px-1 text-left group"
+        className="group flex w-full items-center justify-between px-1 py-6 text-left"
         aria-expanded={open}
       >
-        <span className="text-[15px] font-medium text-gray-900 dark:text-gray-100 group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors pr-8">
+        <span className="pr-8 text-[15px] font-medium text-[#1d1d1f] transition-colors group-hover:text-[#5147e6]">
           {question}
         </span>
         <ChevronDown
-          className="faq-chevron w-5 h-5 text-gray-400 flex-shrink-0"
+          className="faq-chevron h-5 w-5 flex-shrink-0 text-[#9a9a9f]"
           data-open={String(open)}
         />
       </button>
       <div className="faq-content" data-open={String(open)}>
-        <p className="pb-5 px-1 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+        <p className="px-1 pb-6 text-sm leading-relaxed text-[#5f5f66]">
           {answer}
         </p>
       </div>
@@ -143,6 +141,7 @@ function Reveal({
 // ── Main Landing Page ────────────────────────────────────────────────────
 export default function LandingPage() {
   const [navScrolled, setNavScrolled] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
   const videoRef = useRef<HTMLIFrameElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -175,65 +174,57 @@ export default function LandingPage() {
     ? `https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&vq=hd1080`
     : undefined;
 
+  const handleWaitlistSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const subject = encodeURIComponent('SwiprCRM waitlist request');
+    const body = encodeURIComponent(`Please add me to the SwiprCRM waitlist.\n\nEmail: ${waitlistEmail}`);
+    window.location.href = `mailto:ronaldchiong2005@gmail.com?subject=${subject}&body=${body}`;
+  }, [waitlistEmail]);
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0f] text-gray-900 dark:text-gray-100 selection:bg-violet-200 transition-colors duration-300">
+    <div className="landing-framer-page min-h-screen bg-[#f5f5f5] text-[#1d1d1f] selection:bg-[#a97eff]/30 transition-colors duration-300">
       {/* ═══════════ NAVIGATION ═══════════ */}
       <nav
-        className={`landing-nav fixed top-0 w-full z-50 ${
+        className={`landing-nav landing-framer-nav fixed top-0 w-full z-50 ${
           navScrolled ? 'scrolled' : 'bg-transparent'
         }`}
       >
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="mx-auto flex h-[86px] max-w-[1200px] items-center justify-between px-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center">
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl">
               <img
                 src="/images/logo_transparent.png"
                 alt="SwiprCRM"
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="font-bold text-[17px] tracking-tight text-gray-900 dark:text-white">
+            <span className="font-normal text-base tracking-[-0.01em] text-white">
               SwiprCRM
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500 dark:text-gray-400">
-            <a href="#features" className="hover:text-gray-900 dark:hover:text-white transition-colors">Features</a>
-            <a href="#about" className="hover:text-gray-900 dark:hover:text-white transition-colors">About Us</a>
-            <a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">Pricing</a>
-            <a href="#faq" className="hover:text-gray-900 dark:hover:text-white transition-colors">FAQ</a>
+          <div className="hidden items-center gap-7 text-sm font-normal text-white md:flex">
+            <a href="#features" className="opacity-90 transition-opacity hover:opacity-100">Features</a>
+            <a href="#approach" className="opacity-90 transition-opacity hover:opacity-100">Approach</a>
+            <a href="#pricing" className="opacity-90 transition-opacity hover:opacity-100">Pricing</a>
+            <a href="#faq" className="opacity-90 transition-opacity hover:opacity-100">FAQ</a>
           </div>
 
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <Link
               href="/dashboard"
-              className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors hidden sm:block"
+              className="landing-login-button hidden items-center gap-4 rounded-lg px-5 py-3 text-sm font-normal text-white sm:flex"
             >
               Login
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10">→</span>
             </Link>
-            {ENABLE_SUBSCRIPTIONS ? (
-              <Link
-                href="/dashboard"
-                className="text-sm font-semibold bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-250 transition-colors"
-              >
-                Get Started
-              </Link>
-            ) : (
-              <button
-                disabled
-                className="text-sm font-semibold bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 px-4 py-2 rounded-lg cursor-not-allowed"
-              >
-                Coming Soon
-              </button>
-            )}
           </div>
         </div>
       </nav>
 
       {/* ═══════════ HERO ═══════════ */}
-      <section className="landing-hero-gradient pt-32 pb-0 px-6 overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="landing-hero-gradient px-6 pb-24 pt-[150px]">
+        <div className="mx-auto max-w-[1160px] text-center">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -242,79 +233,68 @@ export default function LandingPage() {
             <motion.div
               variants={fadeUp}
               custom={0}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-200 dark:border-violet-900/50 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-xs font-semibold uppercase tracking-wider mb-6"
+              className="mb-5 text-xs font-normal uppercase tracking-[0.38em] text-white"
             >
-              <Zap className="w-3 h-3" />
-              SWIPR
+              SWIPRCRM
             </motion.div>
 
             <motion.h1
               variants={fadeUp}
               custom={0.1}
-              className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] text-gray-900 dark:text-white mb-5"
+              className="mx-auto mb-6 max-w-[1160px] text-[44px] font-normal leading-[0.98] tracking-[-0.06em] text-white sm:text-[64px] md:text-[88px]"
             >
-              High-velocity lead sorting
-              <br />
-              <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                tool for your sales team
-              </span>
+              High-velocity lead sorting tool for your sales team
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
               custom={0.2}
-              className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-8 leading-relaxed"
+              className="mx-auto mb-10 max-w-2xl text-[18px] leading-relaxed text-white/70"
             >
-              A keyboard-centric interface for sorting your leads. Flow state
-              prospecting that turns lead management into a high-velocity
-              workflow.
+              A keyboard-centric interface for sorting your leads
             </motion.p>
 
             <motion.div
               variants={fadeUp}
               custom={0.3}
-              className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12"
+              className="mb-14 flex flex-col items-center justify-center gap-4"
             >
-              {ENABLE_SUBSCRIPTIONS ? (
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center gap-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-all hover:shadow-lg hover:shadow-gray-900/20 w-full sm:w-auto justify-center"
-                >
-                  Get Started for free
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              ) : (
-                <button
-                  disabled
-                  className="inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 px-6 py-3 rounded-xl font-semibold text-sm cursor-not-allowed w-full sm:w-auto justify-center"
-                >
-                  Coming Soon
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              )}
               <a
                 href={SCHEDULE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-all w-full sm:w-auto justify-center"
+                className="inline-flex h-[46px] items-center justify-center rounded-lg bg-white px-8 text-sm font-normal text-[#1d1d1f] transition-transform hover:-translate-y-0.5"
               >
-                Book a Demo
+                Book a strategy call
               </a>
+              <form onSubmit={handleWaitlistSubmit} className="landing-waitlist-form">
+                <input
+                  value={waitlistEmail}
+                  onChange={(event) => setWaitlistEmail(event.target.value)}
+                  type="email"
+                  placeholder="Your Email Address"
+                  className="min-w-0 flex-1 bg-transparent px-4 text-sm text-white outline-none placeholder:text-white/62"
+                  required
+                />
+                <button type="submit" className="rounded-md bg-white px-5 py-3 text-sm font-normal text-[#1d1d1f]">
+                  Join Waitlist
+                </button>
+              </form>
             </motion.div>
           </motion.div>
         </div>
 
         {/* ═══════════ VIDEO DEMO ═══════════ */}
-        <div className="landing-cloud-bg pt-16 pb-20 -mt-4">
+        <div className="landing-cloud-bg mx-auto max-w-[1040px] pb-4 pt-8">
           <motion.div
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8, ease: 'easeOut' }}
-            className="max-w-5xl mx-auto px-6 relative z-10"
+            className="relative z-10 mx-auto"
           >
             <div
               ref={videoContainerRef}
-              className="rounded-2xl overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl shadow-purple-900/40 bg-gray-900"
+              className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl shadow-black/50"
             >
               {/* Browser chrome mockup */}
               <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-800/90 border-b border-white/10">
@@ -326,7 +306,7 @@ export default function LandingPage() {
                 <div className="flex-1 mx-3">
                   <div className="h-6 rounded-md bg-gray-700/60 flex items-center px-3">
                     <span className="text-[11px] text-gray-400 truncate">
-                      swiprcrm.vercel.app/dashboard
+                    https://www.youtube.com/Swipr_CRM/demo_video
                     </span>
                   </div>
                 </div>
@@ -381,61 +361,50 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ FEATURES ═══════════ */}
-      <section id="features" className="py-24 px-6 bg-white dark:bg-gray-950 transition-colors">
+      <section id="features" className="bg-[#f5f5f5] px-6 py-24">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <div className="text-center mb-16">
-              <p className="text-xs font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-3">
+            <div className="mb-12">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#1d1d1f]">
                 Features
-              </p>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-                Everything you need to scale
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-lg mx-auto">
-                Scale operations without scaling headcount. Every feature
-                designed for velocity.
               </p>
             </div>
           </Reveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="space-y-3">
             {[
               {
-                icon: <Zap className="w-6 h-6 text-amber-500" />,
+                icon: <Zap className="h-7 w-7 text-white" />,
                 title: 'Timesaver',
-                desc: 'Qualify leads, send follow-ups, update CRMs, and move deals forward in seconds.',
-                bg: 'bg-amber-50 dark:bg-amber-950/20',
+                desc: 'Qualify leads, send follow-ups, update CRMs, and move deals forward in seconds',
               },
               {
-                icon: <Keyboard className="w-6 h-6 text-violet-500" />,
+                icon: <Keyboard className="h-7 w-7 text-white" />,
                 title: 'Keyboard-Centric',
-                desc: 'Every action can be initiated from a single keypress. No mouse required.',
-                bg: 'bg-violet-50 dark:bg-violet-950/20',
+                desc: 'Every action can be initiated from a single keypress',
               },
               {
-                icon: <Layers className="w-6 h-6 text-blue-500" />,
+                icon: <Layers className="h-7 w-7 text-white" />,
                 title: 'Unlimited Swipes',
-                desc: 'No limits to how many leads you can process. Sort through thousands.',
-                bg: 'bg-blue-50 dark:bg-blue-950/20',
+                desc: 'No limits to how many leads you can process',
               },
               {
-                icon: <Activity className="w-6 h-6 text-emerald-500" />,
+                icon: <Activity className="h-7 w-7 text-white" />,
                 title: 'Flow State',
-                desc: 'A swipe-based experience that engages and reduces decision fatigue.',
-                bg: 'bg-emerald-50 dark:bg-emerald-950/20',
+                desc: 'A swipe-based experience that engages, reduces decision fatigue, and turns lead management into a high-velocity workflow',
               },
             ].map((feature, i) => (
               <Reveal key={feature.title} delay={i * 0.08}>
-                <div className="group rounded-2xl border border-gray-100 dark:border-gray-900 p-6 hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-lg hover:shadow-violet-500/5 dark:hover:shadow-violet-500/2 transition-all duration-300">
+                <div className="landing-feature-row">
                   <div
-                    className={`w-12 h-12 ${feature.bg} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+                    className="flex h-[60px] w-[60px] items-center justify-center rounded-lg bg-gradient-to-b from-[#111111] via-[#5147e6] to-[#a97eff] shadow-lg shadow-[#5147e6]/20"
                   >
                     {feature.icon}
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-2xl font-medium tracking-[-0.04em] text-[#1d1d1f]">
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                  <p className="max-w-[520px] text-left text-base leading-relaxed text-[#4d4d52]">
                     {feature.desc}
                   </p>
                 </div>
@@ -446,52 +415,30 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ ABOUT US ═══════════ */}
-      <section id="about" className="py-24 px-6 bg-gray-50/80 dark:bg-gray-900/20 transition-colors">
+      <section id="approach" className="bg-[#f5f5f5] px-6 py-24">
         <div className="max-w-5xl mx-auto">
           <Reveal>
-            <div className="text-center mb-14">
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-                About Us
+            <div className="mb-14">
+              <h2 className="text-4xl font-normal tracking-[-0.06em] text-[#1d1d1f] sm:text-[52px]">
+                The Reality of Lead Management
               </h2>
-            </div>
-          </Reveal>
-
-          {/* Founder Story Quote */}
-          <Reveal>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-150 dark:border-gray-800 p-8 md:p-10 mb-12 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-2 h-full bg-violet-600" />
-              <div className="relative z-10">
-                <span className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400 block mb-3">Our Story</span>
-                <blockquote className="text-lg md:text-xl font-medium text-gray-800 dark:text-gray-200 italic leading-relaxed mb-6">
-                  &ldquo;During my time as an SDR, I found myself constantly feeling burned out by navigating and managing CRMs during prospecting. I built SwiprCRM to remove the friction, clutter, and endless clicking found in traditional CRMs.&rdquo;
-                </blockquote>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                    RC
-                  </div>
-                  <div>
-                    <cite className="not-italic font-semibold text-gray-900 dark:text-white block text-sm">Ronald Chiong</cite>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Founder, SwiprCRM</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </Reveal>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Problems */}
             <Reveal delay={0.1}>
-              <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+              <div className="rounded-2xl bg-white p-8">
+                <h3 className="mb-6 text-2xl font-medium tracking-[-0.04em] text-[#1d1d1f]">
                   The Problems
                 </h3>
                 <ul className="space-y-4">
                   {PROBLEMS.map((problem) => (
                     <li
                       key={problem}
-                      className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400"
+                      className="flex items-start gap-3 text-base text-[#4d4d52]"
                     >
-                      <div className="w-5 h-5 rounded-full bg-red-50 dark:bg-red-950/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-5 h-5 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <X className="w-3 h-3 text-red-400" />
                       </div>
                       {problem}
@@ -503,16 +450,16 @@ export default function LandingPage() {
 
             {/* Solutions */}
             <Reveal delay={0.2}>
-              <div className="rounded-2xl bg-gray-900 dark:bg-gray-950 p-8 text-white">
-                <h3 className="text-lg font-bold mb-6">The Solution</h3>
+              <div className="rounded-2xl bg-[#1d1d1f] p-8 text-white">
+                <h3 className="text-2xl font-medium tracking-[-0.04em] mb-6">The Solution</h3>
                 <ul className="space-y-4">
                   {SOLUTIONS.map((solution) => (
                     <li
                       key={solution}
-                      className="flex items-start gap-3 text-sm text-gray-300 dark:text-gray-400"
+                      className="flex items-start gap-3 text-base text-white/70"
                     >
-                      <div className="w-5 h-5 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 text-violet-400" />
+                      <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-3 h-3 text-[#a97eff]" />
                       </div>
                       {solution}
                     </li>
@@ -525,17 +472,17 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ PRICING ═══════════ */}
-      <section id="pricing" className="py-24 px-6 bg-white dark:bg-gray-950 transition-colors">
+      <section id="pricing" className="bg-[#f5f5f5] px-6 py-24">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="text-center mb-14">
-              <p className="text-xs font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-3">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#1d1d1f]">
                 Pricing
               </p>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
+              <h2 className="text-4xl font-normal tracking-[-0.06em] text-[#1d1d1f] sm:text-[52px]">
                 Pricing
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 mt-3">
+              <p className="mt-3 text-[#5f5f66]">
                 Simple, transparent pricing for teams of all sizes.
               </p>
             </div>
@@ -544,39 +491,39 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6 items-start max-w-5xl mx-auto">
             {/* Individuals */}
             <Reveal delay={0.05}>
-              <div className="pricing-card rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-7 flex flex-col">
+              <div className="pricing-card flex min-h-[520px] flex-col rounded-2xl bg-white p-7">
                 <div className="mb-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#9a9a9f]">
                     AFFORDABLE FOR EARLY STAGE
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mt-2">
+                <h3 className="mt-2 text-lg font-semibold text-[#1d1d1f]">
                   Individuals
                 </h3>
                 <div className="mt-4 mb-6">
-                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">
+                  <span className="text-5xl font-semibold tracking-[-0.06em] text-[#1d1d1f]">
                     $15
                   </span>
-                  <span className="text-gray-400 text-sm font-medium">
-                    /mo
+                  <span className="text-sm font-medium text-[#77777d]">
+                    /month
                   </span>
                 </div>
                 {ENABLE_SUBSCRIPTIONS ? (
                   <Link
                     href="/dashboard"
-                    className="w-full py-2.5 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold text-center hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors mb-6"
+                    className="mb-6 w-full rounded-lg bg-[#1d1d1f] py-3 text-center text-sm font-medium text-white transition-colors hover:bg-[#313136]"
                   >
-                    GET STARTED
+                    Get started
                   </Link>
                 ) : (
                   <button
                     disabled
-                    className="w-full py-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 text-sm font-semibold text-center cursor-not-allowed mb-6"
+                    className="mb-6 w-full cursor-not-allowed rounded-lg bg-[#f1f1f1] py-3 text-center text-sm font-medium text-[#9a9a9f]"
                   >
-                    COMING SOON
+                    Coming soon
                   </button>
                 )}
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#9a9a9f]">
                   THIS INCLUDES:
                 </p>
                 <ul className="space-y-3 flex-1">
@@ -588,9 +535,9 @@ export default function LandingPage() {
                   ].map((item) => (
                     <li
                       key={item}
-                      className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-400"
+                      className="flex items-center gap-2.5 text-sm text-[#4d4d52]"
                     >
-                      <Check className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#5147e6] flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -600,42 +547,42 @@ export default function LandingPage() {
 
             {/* Teams — highlighted */}
             <Reveal delay={0.1}>
-              <div className="pricing-card rounded-2xl border-2 border-violet-500 bg-white dark:bg-gray-900 p-7 flex flex-col relative">
+              <div className="pricing-card relative flex min-h-[520px] flex-col rounded-2xl bg-[#1d1d1f] p-7 text-white">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-violet-600 text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#1d1d1f]">
                     Featured
                   </span>
                 </div>
                 <div className="mb-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-violet-500">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#a97eff]">
                     PRIORITY ACCESS
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mt-2">Teams</h3>
+                <h3 className="text-lg font-semibold text-white mt-2">Teams</h3>
                 <div className="mt-4 mb-6">
-                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">
+                  <span className="text-5xl font-semibold tracking-[-0.06em] text-white">
                     $12
                   </span>
-                  <span className="text-gray-400 text-sm font-medium">
-                    /mo /seat
+                  <span className="text-sm font-medium text-white/55">
+                    /month /seat
                   </span>
                 </div>
                 {ENABLE_SUBSCRIPTIONS ? (
                   <Link
                     href="/dashboard"
-                    className="w-full py-2.5 rounded-lg bg-violet-600 text-white text-sm font-semibold text-center hover:bg-violet-700 transition-colors mb-6"
+                    className="mb-6 w-full rounded-lg bg-white py-3 text-center text-sm font-medium text-[#1d1d1f] transition-colors hover:bg-white/90"
                   >
-                    GET STARTED
+                    Get in touch
                   </Link>
                 ) : (
                   <button
                     disabled
-                    className="w-full py-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 text-sm font-semibold text-center cursor-not-allowed mb-6"
+                    className="mb-6 w-full cursor-not-allowed rounded-lg bg-white/10 py-3 text-center text-sm font-medium text-white/45"
                   >
-                    COMING SOON
+                    Coming soon
                   </button>
                 )}
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/45 mb-3">
                   WHAT&apos;S INCLUDED:
                 </p>
                 <ul className="space-y-3 flex-1">
@@ -648,9 +595,9 @@ export default function LandingPage() {
                   ].map((item) => (
                     <li
                       key={item}
-                      className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-400"
+                      className="flex items-center gap-2.5 text-sm text-white/68"
                     >
-                      <Check className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#a97eff] flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -660,17 +607,17 @@ export default function LandingPage() {
 
             {/* Enterprise */}
             <Reveal delay={0.15}>
-              <div className="pricing-card rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-7 flex flex-col">
+              <div className="pricing-card flex min-h-[520px] flex-col rounded-2xl bg-white p-7">
                 <div className="mb-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#9a9a9f]">
                     FULL CUSTOMIZATION
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mt-2">
+                <h3 className="text-lg font-semibold text-[#1d1d1f] mt-2">
                   Enterprise
                 </h3>
                 <div className="mt-4 mb-6">
-                  <span className="text-3xl font-extrabold text-gray-900 dark:text-white">
+                  <span className="text-4xl font-semibold tracking-[-0.05em] text-[#1d1d1f]">
                     Custom Pricing
                   </span>
                 </div>
@@ -678,11 +625,11 @@ export default function LandingPage() {
                   href={SCHEDULE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold text-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors mb-6"
+                  className="mb-6 w-full rounded-lg border border-[#dedede] bg-white py-3 text-center text-sm font-medium text-[#1d1d1f] transition-colors hover:bg-[#f7f7f7]"
                 >
-                  Contact Us
+                  Contact Founder
                 </a>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#9a9a9f]">
                   INCLUDES:
                 </p>
                 <ul className="space-y-3 flex-1">
@@ -690,9 +637,9 @@ export default function LandingPage() {
                     (item) => (
                       <li
                         key={item}
-                        className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-400"
+                        className="flex items-center gap-2.5 text-sm text-[#4d4d52]"
                       >
-                        <Check className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                        <Check className="w-4 h-4 text-[#5147e6] flex-shrink-0" />
                         {item}
                       </li>
                     )
@@ -705,11 +652,11 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ FAQ ═══════════ */}
-      <section id="faq" className="py-24 px-6 bg-gray-50/80 dark:bg-gray-900/20 transition-colors">
+      <section id="faq" className="bg-[#f5f5f5] px-6 py-24">
         <div className="max-w-3xl mx-auto">
           <Reveal>
             <div className="mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
+              <h2 className="text-4xl font-normal tracking-[-0.06em] text-[#1d1d1f] sm:text-[52px]">
                 Frequently
                 <br />
                 Asked Questions
@@ -718,7 +665,7 @@ export default function LandingPage() {
           </Reveal>
 
           <Reveal delay={0.1}>
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="rounded-2xl bg-white px-7">
               {FAQ_ITEMS.map((item) => (
                 <FAQItem
                   key={item.q}
@@ -732,7 +679,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 py-16 px-6 transition-colors">
+      <footer className="border-t border-[#e7e7e7] bg-[#f5f5f5] px-6 py-16">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             {/* Brand */}
@@ -745,58 +692,61 @@ export default function LandingPage() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <span className="font-bold text-[15px] tracking-tight text-gray-900 dark:text-white">
+                <span className="font-medium text-[15px] tracking-tight text-[#1d1d1f]">
                   SwiprCRM
                 </span>
               </div>
-              <p className="text-sm text-gray-400 dark:text-gray-500 leading-relaxed">
-                High-velocity lead management for modern sales teams.
+              <p className="text-sm leading-relaxed text-[#77777d]">
+                High-velocity outbound CRM for modern sales teams.
               </p>
             </div>
 
             {/* Product */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9a9a9f] mb-4">
                 Product
               </p>
-              <ul className="space-y-2.5 text-sm text-gray-500 dark:text-gray-400">
+              <ul className="space-y-2.5 text-sm text-[#77777d]">
                 <li>
-                  <a href="#features" className="hover:text-gray-900 dark:hover:text-white transition-colors">Features</a>
+                  <a href="#features" className="transition-colors hover:text-[#1d1d1f]">Features</a>
                 </li>
                 <li>
-                  <a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">Pricing</a>
+                  <a href="#pricing" className="transition-colors hover:text-[#1d1d1f]">Pricing</a>
                 </li>
                 <li>
-                  <Link href="/dashboard" className="hover:text-gray-900 dark:hover:text-white transition-colors">Dashboard</Link>
+                  <Link href="/dashboard" className="transition-colors hover:text-[#1d1d1f]">Dashboard</Link>
                 </li>
               </ul>
             </div>
 
             {/* Company */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9a9a9f] mb-4">
                 Company
               </p>
-              <ul className="space-y-2.5 text-sm text-gray-500 dark:text-gray-400">
+              <ul className="space-y-2.5 text-sm text-[#77777d]">
                 <li>
-                  <a href="#about" className="hover:text-gray-900 dark:hover:text-white transition-colors">About</a>
+                  <a href="#approach" className="transition-colors hover:text-[#1d1d1f]">Approach</a>
                 </li>
                 <li>
-                  <a href="#faq" className="hover:text-gray-900 dark:hover:text-white transition-colors">FAQ</a>
+                  <a href="#faq" className="transition-colors hover:text-[#1d1d1f]">FAQ</a>
+                </li>
+                <li>
+                  <a href="https://discord.gg/V2Z3CanYz" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-[#1d1d1f]">Community Discord</a>
                 </li>
               </ul>
             </div>
 
             {/* Contact */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9a9a9f] mb-4">
                 Contact
               </p>
-              <ul className="space-y-2.5 text-sm text-gray-500 dark:text-gray-400">
+              <ul className="space-y-2.5 text-sm text-[#77777d]">
                 <li>
                   <a
-                    href="mailto:ronaldchiong2005@gmail.com"
-                    className="hover:text-gray-900 dark:hover:text-white transition-colors"
+                    href="mailto:swiprcrm@gmail.com"
+                    className="transition-colors hover:text-[#1d1d1f]"
                   >
                     Email Us
                   </a>
@@ -806,7 +756,7 @@ export default function LandingPage() {
                     href={SCHEDULE_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-gray-900 dark:hover:text-white transition-colors"
+                    className="transition-colors hover:text-[#1d1d1f]"
                   >
                     Book a Call
                   </a>
@@ -815,14 +765,14 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-xs text-gray-400 dark:text-gray-500">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-[#e7e7e7]">
+            <p className="text-xs text-[#9a9a9f]">
               © {new Date().getFullYear()} SwiprCRM. All rights reserved.
             </p>
             <div className="flex items-center gap-3">
               <a
-                href="mailto:ronaldchiong2005@gmail.com"
-                className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-900 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                href="mailto:swiprcrm@gmail.com"
+                className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#9a9a9f] hover:text-[#1d1d1f] transition-colors"
                 aria-label="Email"
               >
                 <Mail className="w-4 h-4" />
@@ -831,7 +781,7 @@ export default function LandingPage() {
                 href="https://www.linkedin.com/company/swiprcrm/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-900 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#9a9a9f] hover:text-[#1d1d1f] transition-colors"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-4 h-4" />
