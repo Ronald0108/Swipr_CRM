@@ -3,13 +3,13 @@
 import { motion } from 'motion/react';
 import { Download, RefreshCw } from 'lucide-react';
 import { useApp } from '@/app/providers';
+import { SettingsMenu } from './SettingsMenu';
 
 export function StatsBar() {
   const {
     leads, currentIndex,
     setShowCrmModal, setCrmError, loadCrmStatus,
-    setShowImportModal, setImportError, setImportSuccess,
-    handleLogout
+    setShowImportModal, setImportError, setImportSuccess
   } = useApp();
 
   const total = leads.length;
@@ -36,7 +36,7 @@ export function StatsBar() {
         <button onClick={() => { setShowImportModal(true); setImportError(''); setImportSuccess(''); }} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2" style={{ background: '#312e81', border: '1px solid #4338ca' }}>
           <Download className="w-4 h-4" />Import Leads
         </button>
-        <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors" style={{ background: '#1f2937', border: '1px solid #374151' }}>Logout</button>
+        <SettingsMenu />
       </div>
     </header>
   );

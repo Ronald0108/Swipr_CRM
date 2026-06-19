@@ -29,7 +29,7 @@ export function KeyboardLegend() {
   const {
     pressedKey, setPressedKey,
     setShowNotesModal, promptLeadEmail, promptLeadCall, currentLead,
-    navigatePrev, isDone, triggerSwipeAction
+    navigatePrev, isDone, triggerSwipeAction, addActivity
   } = useApp();
 
   return (
@@ -44,7 +44,7 @@ export function KeyboardLegend() {
               else if (action === 'email') promptLeadEmail(currentLead);
               else if (action === 'call') promptLeadCall(currentLead);
               else if (action === 'previous') navigatePrev();
-              else if (!isDone) triggerSwipeAction(action as SwipeAction);
+              else if (!isDone) triggerSwipeAction(action as SwipeAction, addActivity);
             }}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-150 ${isPressed ? `${bg} scale-95` : 'border-gray-800 bg-transparent'}`}>
             <kbd className={`text-xs font-bold font-mono ${isPressed ? color : 'text-gray-400'} min-w-[14px]`}>{key}</kbd>

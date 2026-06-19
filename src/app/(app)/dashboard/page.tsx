@@ -32,6 +32,7 @@ import { KeyboardLegend, KEY_ACTIONS } from '@/app/components/dashboard/Keyboard
 import { LeadSearchPanel } from '@/app/components/dashboard/LeadSearchPanel';
 import { StatsBar } from '@/app/components/dashboard/StatsBar';
 import { CallNoticeToast } from '@/app/components/CallNoticeToast';
+import { SettingsMenu } from '@/app/components/dashboard/SettingsMenu';
 
 
 
@@ -42,9 +43,10 @@ export default function HomePage() {
 
   const {
     session, authLoading, authSubmitting, email, setEmail, password, setPassword, authError,
-    handleLogin, handleLogout,
+    handleLogin,
     leads, currentIndex, setCurrentIndex, leadsLoading, fetchLeads, currentLead, isDone,
     activityLog, statsCount, setStatsCount, setActivityLog,
+    addActivity,
     showNotesModal, setShowNotesModal, showEmailModal, setShowEmailModal,
     showLeadSearch, setShowLeadSearch, showDeleteConfirm, setShowDeleteConfirm,
     showImportModal, setShowImportModal, showCrmModal, setShowCrmModal,
@@ -99,11 +101,11 @@ export default function HomePage() {
       else if (action === 'email') { if (noModal) promptLeadEmail(currentLead); }
       else if (action === 'call') { if (noModal) promptLeadCall(currentLead); }
       else if (action === 'previous') { if (noModal) navigatePrev(); }
-      else { if (noModal) triggerSwipeAction(action as SwipeAction); }
+      else { if (noModal) triggerSwipeAction(action as SwipeAction, addActivity); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [triggerSwipeAction, navigatePrev, navigateNext, showNotesModal, showEmailModal, currentLead, openLeadHistory, promptLeadCall, promptLeadEmail, setPressedKey, setShowNotesModal]);
+  }, [triggerSwipeAction, navigatePrev, navigateNext, showNotesModal, showEmailModal, currentLead, openLeadHistory, promptLeadCall, promptLeadEmail, setPressedKey, setShowNotesModal, addActivity]);
 
   // ── Modals extracted ──
 
@@ -157,7 +159,7 @@ export default function HomePage() {
   }
 
   // ── Leads loading ──
-  if (leadsLoading) {
+  if (leadsLoading && leads.length === 0) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#0a0a0f]">
         <div className="text-center">
@@ -187,7 +189,7 @@ export default function HomePage() {
             <button onClick={() => { setShowImportModal(true); setImportError(''); setImportSuccess(''); }} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2 bg-[#312e81] border border-[#4338ca]">
               <Download className="w-4 h-4" />Import Leads
             </button>
-            <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors bg-[#1f2937] border border-[#374151]">Logout</button>
+            <SettingsMenu />
           </div>
         </header>
         <main className="flex-1 flex items-center justify-center px-6 text-center">
@@ -268,7 +270,7 @@ export default function HomePage() {
 
       <CallNoticeToast notice={callNotice} />
 
-      <div className="fixed bottom-20 right-5 z-40 flex items-center gap-1.5 rounded-xl border border-[#1c1c2a] bg-[#0e0e17]/95 p-1.5 shadow-2xl" style={{ backdropFilter: 'blur(14px)' }}>
+      <div className="fixed bottom-20 right-5 z-40 grid grid-cols-2 gap-1.5 rounded-xl border border-[#1c1c2a] bg-[#0e0e17]/95 p-1.5 shadow-2xl" style={{ backdropFilter: 'blur(14px)' }}>
         {([
           { icon: CheckCircle, count: statsCount.connected, color: 'text-emerald-400', label: 'Connected' },
           { icon: XCircle, count: statsCount.lost, color: 'text-rose-400', label: 'Lost' },

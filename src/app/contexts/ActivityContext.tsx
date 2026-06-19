@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Lead } from '../data/leads';
 import { useAuth } from './AuthContext';
 import { useLeads } from './LeadsContext';
@@ -38,6 +37,7 @@ interface ActivityContextType {
 }
 
 const ActivityContext = createContext<ActivityContextType | null>(null);
+const STATUS_ACTIONS: ActivityType[] = ['connected', 'lost', 'voicemail', 'next'];
 
 export function useActivity() {
   const ctx = useContext(ActivityContext);
@@ -54,17 +54,16 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const [detailActivityFilter, setDetailActivityFilter] = useState<ActivityFilter>('all');
   const [statsCount, setStatsCount] = useState({ connected: 0, lost: 0, voicemail: 0, next: 0 });
 
-  const statusActions: ActivityType[] = ['connected', 'lost', 'voicemail', 'next'];
-
   const mapActivitiesToItems = useCallback((activities: LeadActivity[], availableLeads: Lead[]) => {
-    return activities.map((activity) => {
+    return activities.flatMap((activity) => {
       const lead = availableLeads.find((item) => item.id === activity.leadId);
+      if (!lead) return [];
       return {
         id: activity.id,
         leadId: activity.leadId,
         action: activity.activityType,
-        leadName: lead?.name ?? 'Unknown Lead',
-        company: lead?.company ?? 'Unknown Company',
+        leadName: lead.name,
+        company: lead.company,
         timestamp: new Date(activity.createdAt),
       };
     });
@@ -97,17 +96,17 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   const getLeadStatusLabel = useCallback((lead: Lead) => {
-    const latestStatus = activityLog.find((item) => item.leadId === lead.id && statusActions.includes(item.action));
+    const latestStatus = activityLog.find((item) => item.leadId === lead.id && STATUS_ACTIONS.includes(item.action));
     return latestStatus ? actionMeta[latestStatus.action].label : 'None';
-  }, [activityLog, statusActions]);
+  }, [activityLog]);
 
-  // Load activities when leads are loaded initially
   useEffect(() => {
     if (!session) {
       setActivityLog([]);
+      setStatsCount({ connected: 0, lost: 0, voicemail: 0, next: 0 });
       return;
     }
-    if (!leadsLoading && leads.length > 0 && activityLog.length === 0) {
+    if (!leadsLoading && leads.length > 0) {
       fetchRecentActivities(session.user.id, 80)
         .then(recentActivities => {
           setActivityLog(mapActivitiesToItems(recentActivities, leads));
@@ -116,7 +115,17 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
           console.error('Error fetching recent activities:', activityError?.message || activityError);
         });
     }
-  }, [leadsLoading, leads, session, mapActivitiesToItems, activityLog.length]);
+    if (!leadsLoading && leads.length === 0) setActivityLog([]);
+  }, [leadsLoading, leads, session, mapActivitiesToItems]);
+
+  useEffect(() => {
+    setStatsCount(activityLog.reduce((counts, item) => {
+      if (item.action === 'connected' || item.action === 'lost' || item.action === 'voicemail' || item.action === 'next') {
+        counts[item.action] += 1;
+      }
+      return counts;
+    }, { connected: 0, lost: 0, voicemail: 0, next: 0 }));
+  }, [activityLog]);
 
   return (
     <ActivityContext.Provider value={{
