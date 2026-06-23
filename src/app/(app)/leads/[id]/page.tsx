@@ -9,6 +9,7 @@ import { EmailDraftModal } from '@/app/components/EmailDraftModal';
 import { useApp, actionMeta, timeAgo } from '@/app/providers';
 import type { ActivityFilter } from '@/app/types/activity';
 import { CallNoticeToast } from '@/app/components/CallNoticeToast';
+import { CallOutcomeModal } from '@/app/components/CallOutcomeModal';
 
 
 
@@ -26,6 +27,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     callNotice,
     promptLeadCall, promptLeadEmail,
     handleSaveNotes, handleEmailSent,
+    showCallOutcomeModal, callOutcomeLead, handleCallOutcome, closeCallOutcomeModal,
   } = app;
 
   const detailLeadId = decodeURIComponent(id);
@@ -130,7 +132,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             <p className="text-gray-400 text-sm mt-1">{detailLead.title}</p>
             <p className="text-gray-500 text-sm">{detailLead.company}</p>
             <div className="mt-3 space-y-1 text-xs text-gray-400">
-              <p>Phone: {detailLead.phone || 'N/A'}</p>
+              <p data-phone-number={detailLead.phone}>Phone: <span itemProp="telephone">{detailLead.phone || 'N/A'}</span></p>
               <p>Email: {detailLead.email || 'N/A'}</p>
               <p>Score: {detailLead.score ?? 0}</p>
             </div>
@@ -153,6 +155,12 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             isOpen={showEmailModal}
             onClose={() => setShowEmailModal(false)}
             onSend={handleEmailSent}
+          />
+          <CallOutcomeModal
+            lead={callOutcomeLead}
+            isOpen={showCallOutcomeModal}
+            onClose={closeCallOutcomeModal}
+            onSave={handleCallOutcome}
           />
         </>
       )}

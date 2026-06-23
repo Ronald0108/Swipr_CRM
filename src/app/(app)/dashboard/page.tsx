@@ -32,6 +32,7 @@ import { KeyboardLegend, KEY_ACTIONS } from '@/app/components/dashboard/Keyboard
 import { LeadSearchPanel } from '@/app/components/dashboard/LeadSearchPanel';
 import { StatsBar } from '@/app/components/dashboard/StatsBar';
 import { CallNoticeToast } from '@/app/components/CallNoticeToast';
+import { CallOutcomeModal } from '@/app/components/CallOutcomeModal';
 import { SettingsMenu } from '@/app/components/dashboard/SettingsMenu';
 
 
@@ -53,6 +54,7 @@ export default function HomePage() {
     handleLeadEdit, autoEditLeadId, autoEditLeadToken,
     handleCreateLead, creatingLead, handleDeleteCurrentLead, deletingLead,
     callNotice, promptLeadCall, promptLeadEmail,
+    showCallOutcomeModal, callOutcomeLead, handleCallOutcome, closeCallOutcomeModal,
     handleSaveNotes, handleEmailSent,
     leadSearchQuery, setLeadSearchQuery, jumpToLeadSearch, jumpToLeadSearchIndex, leadSearchMatchCount,
     navigatePrev, navigateNext, triggerSwipeAction,
@@ -295,6 +297,12 @@ export default function HomePage() {
           <EmailDraftModal lead={currentLead} isOpen={showEmailModal} onClose={() => setShowEmailModal(false)} onSend={handleEmailSent} />
         </>
       )}
+      <CallOutcomeModal
+        lead={callOutcomeLead}
+        isOpen={showCallOutcomeModal}
+        onClose={closeCallOutcomeModal}
+        onSave={handleCallOutcome}
+      />
       <AnimatePresence>
         <DeleteConfirmDialog />
       </AnimatePresence>

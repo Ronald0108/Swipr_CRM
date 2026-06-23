@@ -28,7 +28,7 @@ interface ActivityContextType {
   setLeadActivityItems: React.Dispatch<React.SetStateAction<ActivityItem[]>>;
   detailActivityFilter: ActivityFilter;
   setDetailActivityFilter: React.Dispatch<React.SetStateAction<ActivityFilter>>;
-  addActivity: (action: ActivityType, lead: Lead) => Promise<void>;
+  addActivity: (action: ActivityType, lead: Lead, metadata?: Record<string, unknown>) => Promise<void>;
   refreshLeadActivities: (leadId: string, filter: ActivityFilter) => Promise<void>;
   getLocalLeadActivityItems: (leadId: string) => ActivityItem[];
   statsCount: { connected: number; lost: number; voicemail: number; next: number };
@@ -82,7 +82,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     } catch (error) { console.error('Error fetching lead activities:', error); setLeadActivityItems(getLocalLeadActivityItems(leadId)); }
   }, [getLocalLeadActivityItems, leads, mapActivitiesToItems, session]);
 
-  const addActivity = useCallback(async (action: ActivityType, lead: Lead) => {
+  const addActivity = useCallback(async (action: ActivityType, lead: Lead, metadata: Record<string, unknown> = {}) => {
     const nextItem: ActivityItem = {
       id: `${Date.now()}-${Math.random()}`, leadId: lead.id, action,
       leadName: lead.name, company: lead.company, timestamp: new Date(),
@@ -90,7 +90,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     setActivityLog((prev) => [nextItem, ...prev].slice(0, 80));
     if (!session) return;
     try {
-      await insertLeadActivity(session.user.id, lead.id, action);
+      await insertLeadActivity(session.user.id, lead.id, action, metadata);
       // We don't have detailLeadId here, but refreshLeadActivities could be called by the page
     } catch (error) { console.error('Error adding activity:', error); }
   }, [session]);

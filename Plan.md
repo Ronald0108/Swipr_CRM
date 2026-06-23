@@ -89,91 +89,46 @@ Remove: `@mui/*`, `@emotion/*`, `react-dnd`, `react-popper`, `react-slick`, `rea
 
 ---
 
-## Phase 1: Multi-Tenant Database Schema (Weeks 2-3)
+## Phase 1: Create the HubSpot Developer App (The Setup)
 
-> Transform from single-user to organization-based architecture.
-
-### Database Tables
-
-**`organizations`** — The parent entity.
-```
-id, name, slug (unique), billing_plan, created_at, updated_at
-```
-
-**`organization_members`** — Users belong to orgs.
-```
-id, organization_id (FK), user_id (FK → auth.users), role ('admin' | 'rep'),
-invited_at, joined_at
-```
-
-### Migration Steps
-1. Create `organizations` and `organization_members` tables
-2. Auto-create an org for each existing user
-3. Add `organization_id` FK to: `leads`, `lead_activities`, `crm_connections`, `crm_sync_runs`
-4. Update RLS policies to scope by org membership
-5. Update all frontend queries to include `organization_id`
-
-> **Key insight:** An Admin connects HubSpot once → all 10 reps start swiping without configuring anything.
+1. **Create a Developer Account:** Go to developers.hubspot.com and create a free account.
+2. **Create an App:** Inside your developer workspace, click "Create an app". Name it "SwiprCRM".
+3. **Get Your Keys:** Go to the Auth tab in your app settings. You will see a Client ID and a Client Secret. Keep this page open.
+4. **Set the Scopes:** Under the "Scopes" section, add the following:
+   - `crm.objects.contacts.read` (To pull leads into SwiprCRM)
+   - `crm.objects.contacts.write` (To update leads when a user swipes)
+5. **Set the Redirect URI:** Under "Redirect URLs", add:
+   - Local testing: `http://localhost:3000/api/auth/callback/hubspot`
+   - Production (Vercel): `https://your-domain.com/api/auth/callback/hubspot`
 
 ---
 
-## Phase 2: CRM Adapter Pattern (Weeks 3-4)
+## Phase 2: Secure Your Environment Variables
 
-> Future-proof backend design. Never hardcode CRM logic into UI components.
+Add these to your `.env.local` file (and later, to your Vercel project settings):
 
-### Universal Interface
-```typescript
-interface CRMAdapter {
-  fetchContacts(limit: number): Promise<Contact[]>;
-  pushContacts(contacts: Contact[]): Promise<SyncResult>;
-  disconnect(): Promise<void>;
-}
+```env
+HUBSPOT_CLIENT_ID=your_client_id_here
+HUBSPOT_CLIENT_SECRET=your_client_secret_here
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
-
-### File Structure
-```
-supabase/functions/_shared/adapters/
-├── types.ts        # CRMAdapter interface, Contact, SyncResult types
-├── hubspot.ts      # class HubSpotAdapter implements CRMAdapter
-├── factory.ts      # getCrmAdapter(provider, token) → CRMAdapter
-```
-
-### Factory Pattern
-```typescript
-function getCrmAdapter(provider: string, accessToken: string): CRMAdapter {
-  switch (provider) {
-    case 'hubspot':  return new HubSpotAdapter(accessToken);
-    case 'salesforce': return new SalesforceAdapter(accessToken);
-    default: throw new Error(`Unsupported CRM: ${provider}`);
-  }
-}
-```
-
-### Refactor existing Edge Functions
-- `hubspot-import-contacts` → `factory.getCrmAdapter('hubspot', token).fetchContacts()`
-- `hubspot-export-contacts` → `adapter.pushContacts()`
-- `hubspot-sync-contacts` → orchestrates both directions
 
 ---
 
-## Phase 3: Integrations Settings UI (Weeks 4-5)
+## Phase 3: The Next.js Integration Code
 
-### Admin-Only Settings Page (`/settings/integrations`)
+### 1. The Authorization Route (`app/api/auth/hubspot/route.ts`)
+This route constructs the specific URL and redirects the user to HubSpot's secure login screen.
 
-**UI:** Grid of CRM provider cards.
-- HubSpot → **Active** (Connect / Disconnect / Sync buttons)
-- Salesforce → **"Coming Soon"** badge
-- Pipedrive → **"Coming Soon"** badge
+### 2. The Callback Route (`app/api/auth/callback/hubspot/route.ts`)
+When the user approves SwiprCRM, HubSpot redirects them here with a temporary `code`. We instantly trade that code for the permanent `access_token` and store it securely in the `integrations` (or `crm_connections`) table under their `organization_id`.
 
-**Access Control:**
-- Only users with `role: 'admin'` can access settings pages
-- Implement middleware or context-based route guards
+---
 
-**OAuth Flow:**
-1. Admin clicks "Connect HubSpot"
-2. Redirects to HubSpot OAuth
-3. Callback saves token to `crm_connections` under `organization_id`
-4. All org members instantly get CRM sync access
+## Phase 4: Connecting the UI
+
+### Admin-Only Settings Page (`/dashboard/settings/integrations`)
+Create a button that points to `/api/auth/hubspot`. Once this is done, you will have successfully connected a company's HubSpot database to your Supabase backend.
 
 ---
 

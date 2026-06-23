@@ -157,13 +157,31 @@ export function getNextLeadIndex(nextLeads: Lead[], preferredLeadId: string | nu
   return Math.min(Math.max(fallbackIndex, 0), nextLeads.length - 1);
 }
 
-export function buildTelHref(phone: string) {
-  const trimmedPhone = phone.trim();
-  if (!trimmedPhone) return null;
-  const hasLeadingPlus = trimmedPhone.startsWith('+');
-  const digits = trimmedPhone.replace(/\D/g, '');
-  if (!digits) return null;
-  return `tel:${hasLeadingPlus ? '+' : ''}${digits}`;
+export function buildTelHref(phone: string): string | null {
+  const trimmed = phone.trim();
+  if (!trimmed) return null;
+
+  // Split on common extension delimiters: "x", "X", "ext.", "ext", "EXT" etc.
+  const [basePart, ...extParts] = trimmed.split(/[xX]|ext\.?\s*/i);
+  const extension = extParts.join('').replace(/\D/g, '');
+
+  const hasLeadingPlus = basePart.startsWith('+');
+  const baseDigits = basePart.replace(/\D/g, '');
+  if (!baseDigits) return null;
+
+  // Use commas (each = ~1s pause) before extension — widely supported by softphones
+  let href = `tel:${hasLeadingPlus ? '+' : ''}${baseDigits}`;
+  if (extension) href += `,,${extension}`;
+
+  return href;
+}
+
+export function formatPhoneDisplay(phone: string): string {
+  const trimmed = phone.trim();
+  if (!trimmed) return '';
+  const [basePart, ...extParts] = trimmed.split(/[xX]|ext\.?\s*/i);
+  const extension = extParts.join('').replace(/\D/g, '');
+  return extension ? `${basePart.trim()} ext. ${extension}` : basePart.trim();
 }
 
 export function timeAgo(date: Date) {

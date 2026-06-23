@@ -229,7 +229,7 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
 
       {/* ── Contact Info ── */}
       <div className="px-5 py-2 border-b border-gray-100 dark:border-[#1f1f2e] space-y-1.5">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5" data-phone-number={lead.phone}>
           <button
             type="button"
             onClick={(event) => {
@@ -245,14 +245,16 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
           >
             <Phone className="w-3.5 h-3.5 text-blue-600" />
           </button>
-          <EditableField
-            value={lead.phone}
-            onSave={v => onEdit('phone', v)}
-            displayClassName="text-gray-700 dark:text-gray-300 text-sm font-medium flex-1"
-            inputClassName="text-gray-700 dark:text-gray-300 text-sm font-medium"
-            disabled={!isActive}
-            placeholder="+1 (555) 000-0000"
-          />
+          <span itemProp="telephone">
+            <EditableField
+              value={lead.phone}
+              onSave={v => onEdit('phone', v)}
+              displayClassName="text-gray-700 dark:text-gray-300 text-sm font-medium flex-1"
+              inputClassName="text-gray-700 dark:text-gray-300 text-sm font-medium"
+              disabled={!isActive}
+              placeholder="+1 (555) 000-0000"
+            />
+          </span>
           {lead.callAttempts > 0 && (
             <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-[#1a1a24] px-2 py-0.5 rounded-full flex-shrink-0">
               {lead.callAttempts} attempt{lead.callAttempts !== 1 ? 's' : ''}
