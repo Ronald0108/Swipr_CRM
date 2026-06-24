@@ -150,18 +150,38 @@ Create a button that points to `/api/auth/hubspot`. Once this is done, you will 
 
 ---
 
-## Phase 5: Horizontal CRM Expansion (Week 8+)
+## Phase 5: CRM Integration Guide (Backend Completion)
 
-> Now that the foundation is bulletproof, adding a new CRM takes days, not weeks.
+> A guide for backend developers on finishing the CRM sync functionality.
 
-### Adding Salesforce
-1. Write `SalesforceAdapter` implementing the universal interface
-2. Add Salesforce OAuth Edge Function
-3. Add "Connect Salesforce" card to settings UI
-4. The rest of the app doesn't change at all
+### What is currently completed:
+1. **Universal Adapter Interface**: `CrmAdapter` in `crm-adapter.ts` provides a strict typescript contract for `getAuthUrl`, `exchangeCodeForTokens`, `getIdentity`, `fetchContacts`, and `pushContacts`.
+2. **Provider Implementations**: `hubspot.ts` and `salesforce.ts` are implemented as classes extending `CrmAdapter`.
+3. **Edge Functions**: The OAuth redirect routes (`hubspot-oauth-start`, `salesforce-oauth-start`) and the callback handlers exist as Supabase Edge Functions.
 
-### Future: Pipedrive, Zoho, Close, etc.
-Each new CRM = one adapter class + one OAuth flow + one UI card.
+### What is left to do:
+
+#### 1. OAuth Callback Persistence
+**Task**: In `hubspot-oauth-callback` and `salesforce-oauth-callback`, the code correctly receives the `access_token` and `refresh_token`. 
+**Action**: You must save these tokens into the Supabase database under a new `crm_connections` table mapped to the user's `organization_id`. 
+*Schema*: `id`, `org_id`, `provider` (enum), `access_token` (encrypted), `refresh_token` (encrypted), `expires_at`.
+
+#### 2. Field Mapping Translation (The Hard Part)
+**Task**: CRMs have wildly different schemas. 
+**Action**: Implement a translation layer inside `fetchContacts` and `pushContacts` for each adapter.
+*   **HubSpot**: Use the `hubspotClient.crm.contacts.basicApi.getPage()`. Map `properties.firstname` + `properties.lastname` to our `Lead.name`. Map `properties.hs_lead_status` to our `Lead.status`.
+*   **Salesforce**: Use a SOQL query (`SELECT Id, FirstName, LastName, Company FROM Contact`). Map these fields to our universal `LeadPayload`.
+
+#### 3. Handling Rate Limits & Background Sync
+**Task**: Fetching 10,000 leads will timeout a standard HTTP request.
+**Action**: 
+- Create a new edge function `sync-worker` that runs via `pg_cron` or Supabase Edge runtime cron.
+- The UI should trigger a sync by adding a row to a `sync_jobs` table.
+- The `sync-worker` processes the queue, pulling 100 contacts per page, storing them in the `leads` table, and tracking progress.
+
+#### 4. "Dirty Tracking" for Pushes
+**Task**: When a user updates a lead in SwiprCRM, it must update in Salesforce/HubSpot.
+**Action**: Add a `dirty_fields` jsonb column to the `leads` table. When `handleLeadEdit` fires, record the changed fields. Have a scheduled cron job (or an immediate webhook) read `dirty_fields` and call the adapter's `pushContacts` method to update the remote CRM.
 
 ---
 

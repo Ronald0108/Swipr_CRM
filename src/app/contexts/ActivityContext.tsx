@@ -9,6 +9,7 @@ import {
   fetchLeadActivities,
   fetchRecentActivities,
   insertLeadActivity,
+  deleteLeadActivity,
 } from '../services/activityService';
 import { actionMeta } from '../lib/constants';
 
@@ -83,17 +84,50 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   }, [getLocalLeadActivityItems, leads, mapActivitiesToItems, session]);
 
   const addActivity = useCallback(async (action: ActivityType, lead: Lead, metadata: Record<string, unknown> = {}) => {
-    const nextItem: ActivityItem = {
-      id: `${Date.now()}-${Math.random()}`, leadId: lead.id, action,
-      leadName: lead.name, company: lead.company, timestamp: new Date(),
-    };
-    setActivityLog((prev) => [nextItem, ...prev].slice(0, 80));
-    if (!session) return;
-    try {
-      await insertLeadActivity(session.user.id, lead.id, action, metadata);
-      // We don't have detailLeadId here, but refreshLeadActivities could be called by the page
-    } catch (error) { console.error('Error adding activity:', error); }
-  }, [session]);
+    const isStatusAction = STATUS_ACTIONS.includes(action);
+    const existingIndex = isStatusAction
+      ? activityLog.findIndex(item => item.leadId === lead.id && STATUS_ACTIONS.includes(item.action))
+      : -1;
+
+    if (isStatusAction && existingIndex !== -1) {
+      const existingItem = activityLog[existingIndex];
+      // Update local state: change action and timestamp, then move it to the top
+      setActivityLog((prev) => {
+        const next = [...prev];
+        const updatedItem: ActivityItem = {
+          ...existingItem,
+          action,
+          timestamp: new Date(),
+        };
+        next.splice(existingIndex, 1);
+        return [updatedItem, ...next];
+      });
+
+      if (!session) return;
+      try {
+        if (existingItem.id && !existingItem.id.includes('-0.')) {
+          await deleteLeadActivity(existingItem.id);
+        }
+        const newDbItem = await insertLeadActivity(session.user.id, lead.id, action, metadata);
+        setActivityLog(prev => prev.map(item => item.id === existingItem.id ? { ...item, id: newDbItem.id } : item));
+      } catch (error) {
+        console.error('Error updating status activity:', error);
+      }
+    } else {
+      // Normal flow: create new chronological activity log entry
+      const nextItem: ActivityItem = {
+        id: `${Date.now()}-${Math.random()}`, leadId: lead.id, action,
+        leadName: lead.name, company: lead.company, timestamp: new Date(),
+      };
+      setActivityLog((prev) => [nextItem, ...prev].slice(0, 80));
+      if (!session) return;
+      try {
+        await insertLeadActivity(session.user.id, lead.id, action, metadata);
+      } catch (error) {
+        console.error('Error adding activity:', error);
+      }
+    }
+  }, [activityLog, session]);
 
   const getLeadStatusLabel = useCallback((lead: Lead) => {
     const latestStatus = activityLog.find((item) => item.leadId === lead.id && STATUS_ACTIONS.includes(item.action));
@@ -119,12 +153,18 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   }, [leadsLoading, leads, session, mapActivitiesToItems]);
 
   useEffect(() => {
-    setStatsCount(activityLog.reduce((counts, item) => {
+    const seenLeads = new Set<string>();
+    const counts = { connected: 0, lost: 0, voicemail: 0, next: 0 };
+
+    for (const item of activityLog) {
       if (item.action === 'connected' || item.action === 'lost' || item.action === 'voicemail' || item.action === 'next') {
-        counts[item.action] += 1;
+        if (!seenLeads.has(item.leadId)) {
+          seenLeads.add(item.leadId);
+          counts[item.action] += 1;
+        }
       }
-      return counts;
-    }, { connected: 0, lost: 0, voicemail: 0, next: 0 }));
+    }
+    setStatsCount(counts);
   }, [activityLog]);
 
   return (

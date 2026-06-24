@@ -1,7 +1,16 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowUpToLine, BarChart3, Plus, Search, Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftOpen,
+  PanelLeftClose,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { useApp } from '@/app/providers';
 
 interface LeadSearchPanelProps {
@@ -11,60 +20,173 @@ interface LeadSearchPanelProps {
 
 export function LeadSearchPanel({ activityCollapsed, onToggleActivity }: LeadSearchPanelProps) {
   const {
-    session, creatingLead, handleCreateLead,
+    leads, currentLead, currentIndex,
     showLeadSearch, setShowLeadSearch,
-    currentLead, setShowDeleteConfirm,
-    leadSearchQuery, setLeadSearchQuery, jumpToLeadSearchIndex, jumpToLeadSearch, leadSearchMatchCount,
-    leads, currentIndex, jumpToFirstLead
+    leadSearchQuery, setLeadSearchQuery, jumpToLeadSearch, leadSearchMatchCount,
+    handleCreateLead, creatingLead,
+    setShowDeleteConfirm,
   } = useApp();
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut: Cmd/Ctrl+K to open search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowLeadSearch(true);
+      }
+      if (e.key === 'Escape' && showLeadSearch) {
+        setShowLeadSearch(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [setShowLeadSearch, showLeadSearch]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (showLeadSearch) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [showLeadSearch]);
+
   return (
-    <div className="relative w-12 flex-shrink-0 border-r flex flex-col items-center gap-2 py-4" style={{ borderColor: '#1c1c2a', background: '#0a0a0f' }}>
-      <button type="button" title={activityCollapsed ? 'Show activity log' : 'Hide activity log'} onClick={onToggleActivity}
-        className={`h-9 w-9 rounded-lg border flex items-center justify-center transition-colors ${activityCollapsed ? 'border-gray-800 bg-transparent text-gray-500 hover:text-gray-300' : 'border-indigo-400 bg-indigo-500/15 text-indigo-300'}`}>
-        <BarChart3 className="h-4 w-4" />
-      </button>
-      <button type="button" title="Add new lead" disabled={!session || creatingLead} onClick={() => void handleCreateLead()}
-        className="h-9 w-9 rounded-lg border border-indigo-500/40 bg-indigo-500/10 text-indigo-300 flex items-center justify-center transition-colors hover:bg-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-40">
-        <Plus className="h-4 w-4" />
-      </button>
-      <button type="button" title="Search leads" onClick={() => setShowLeadSearch((value) => !value)}
-        className={`h-9 w-9 rounded-lg border flex items-center justify-center transition-colors ${showLeadSearch ? 'border-indigo-400 bg-indigo-500/15 text-indigo-300' : 'border-gray-800 bg-transparent text-gray-500 hover:text-gray-300'}`}>
-        <Search className="h-4 w-4" />
-      </button>
-      <button type="button" title="Delete current lead" disabled={!currentLead} onClick={() => setShowDeleteConfirm(true)}
-        className="h-9 w-9 rounded-lg border border-gray-800 bg-transparent text-gray-500 flex items-center justify-center transition-colors hover:border-rose-500/50 hover:bg-rose-500/10 hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-30">
-        <Trash2 className="h-4 w-4" />
-      </button>
-      <div className="flex-1" />
-      <button type="button" title="Back to the top" disabled={leads.length === 0 || currentIndex === 0} onClick={jumpToFirstLead}
-        className="group h-9 w-9 rounded-full border border-indigo-400/30 bg-indigo-500/15 text-indigo-100 flex items-center justify-center transition-colors hover:bg-indigo-500/25 disabled:cursor-not-allowed disabled:opacity-30">
-        <ArrowUpToLine className="h-4 w-4" />
-        <span className="pointer-events-none absolute left-12 bottom-5 whitespace-nowrap rounded-md border border-[#252538] bg-[#11111a] px-2 py-1 text-xs font-semibold text-gray-200 opacity-0 shadow-2xl transition-opacity group-hover:opacity-100">
-          Back to the top
-        </span>
-      </button>
+    <>
+      {/* Sidebar Control Strip */}
+      <div className="flex flex-col items-center gap-1.5 py-3 px-1.5"
+        style={{ borderRight: '1px solid var(--border-subtle)' }}>
+
+        {/* Toggle Activity Sidebar */}
+        <button
+          onClick={onToggleActivity}
+          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--input-bg)]"
+          title={activityCollapsed ? 'Show activity log' : 'Hide activity log'}
+        >
+          {activityCollapsed ? (
+            <PanelLeftOpen className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+          ) : (
+            <PanelLeftClose className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+          )}
+        </button>
+
+        <div className="w-5 h-px my-1" style={{ background: 'var(--border-subtle)' }} />
+
+        {/* Add Lead */}
+        <button
+          onClick={() => void handleCreateLead()}
+          disabled={creatingLead}
+          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--input-bg)] disabled:opacity-40"
+          title="Add new lead"
+        >
+          <Plus className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+        </button>
+
+        {/* Delete Current Lead */}
+        {currentLead && (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-rose-500/15"
+            title="Delete current lead"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-500/60 dark:text-rose-400/40" />
+          </button>
+        )}
+      </div>
+
+      {/* Search Modal (Command Palette style) */}
       <AnimatePresence>
         {showLeadSearch && (
-          <motion.div initial={{ opacity: 0, x: -10, scale: 0.96 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -10, scale: 0.96 }}
-            transition={{ duration: 0.15 }} className="absolute left-12 top-16 z-30 w-72 rounded-xl border p-3 shadow-2xl" style={{ background: '#11111a', borderColor: '#252538' }}>
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-500" />
-              <input autoFocus value={leadSearchQuery}
-                onChange={(event) => { const value = event.target.value; setLeadSearchQuery(value); jumpToLeadSearchIndex(value, -1, 1); }}
-                onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); jumpToLeadSearch(event.shiftKey ? -1 : 1); } if (event.key === 'Escape') setShowLeadSearch(false); }}
-                placeholder="Search leads" className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 focus:outline-none" />
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-gray-500">{leadSearchQuery ? `${leadSearchMatchCount} match${leadSearchMatchCount === 1 ? '' : 'es'}` : 'Type to search'}</span>
-              <div className="flex items-center gap-1">
-                <button type="button" onClick={() => jumpToLeadSearch(-1)} className="rounded-md border border-gray-700 px-2 py-1 text-xs text-gray-300 hover:bg-white/5">Up</button>
-                <button type="button" onClick={() => jumpToLeadSearch(1)} className="rounded-md border border-gray-700 px-2 py-1 text-xs text-gray-300 hover:bg-white/5">Down</button>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setShowLeadSearch(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: -8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full max-w-lg rounded-2xl overflow-hidden"
+              style={{
+                background: 'var(--surface-overlay)',
+                border: '1px solid var(--glass-border)',
+                boxShadow: 'var(--shadow-modal)',
+                backdropFilter: 'blur(var(--glass-blur))',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Search Input */}
+              <div className="flex items-center gap-3 px-4 py-3"
+                style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <Search className="w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={leadSearchQuery}
+                  onChange={(e) => setLeadSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter') {
+                      jumpToLeadSearch(e.shiftKey ? -1 : 1);
+                    }
+                    if (e.key === 'Escape') {
+                      setShowLeadSearch(false);
+                    }
+                  }}
+                  placeholder="Search leads by name, company, email…"
+                  className="flex-1 bg-transparent text-[var(--text-primary)] text-sm placeholder:text-[var(--text-tertiary)] placeholder:opacity-50 focus:outline-none"
+                />
+                {leadSearchQuery && (
+                  <span className="text-[10px] text-[var(--text-secondary)] tabular-nums flex-shrink-0 font-medium">
+                    {leadSearchMatchCount} match{leadSearchMatchCount !== 1 ? 'es' : ''}
+                  </span>
+                )}
+                <kbd className="text-[9px] px-1.5 py-0.5 rounded text-[var(--text-secondary)]"
+                  style={{ background: 'var(--input-bg)', border: '1px solid var(--border-subtle)' }}>
+                  ESC
+                </kbd>
               </div>
-            </div>
+
+              {/* Search Navigation */}
+              {leadSearchQuery && leadSearchMatchCount > 0 && (
+                <div className="flex items-center justify-between px-4 py-2.5"
+                  style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <p className="text-[var(--text-secondary)] text-[10px] opacity-80">
+                    Press <kbd className="text-[var(--text-primary)] font-bold mx-0.5">Enter</kbd> to jump to next match,{' '}
+                    <kbd className="text-[var(--text-primary)] font-bold mx-0.5">Shift+Enter</kbd> for previous
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => jumpToLeadSearch(-1)}
+                      className="w-6 h-6 rounded flex items-center justify-center transition-colors hover:bg-[var(--input-bg)]"
+                    >
+                      <ChevronLeft className="w-3 h-3 text-[var(--text-secondary)]" />
+                    </button>
+                    <button
+                      onClick={() => jumpToLeadSearch(1)}
+                      className="w-6 h-6 rounded flex items-center justify-center transition-colors hover:bg-[var(--input-bg)]"
+                    >
+                      <ChevronRight className="w-3 h-3 text-[var(--text-secondary)]" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Info */}
+              <div className="px-4 py-3">
+                <p className="text-[var(--text-tertiary)] text-[10px]">
+                  {leads.length} total leads · Currently viewing #{currentIndex + 1}
+                </p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

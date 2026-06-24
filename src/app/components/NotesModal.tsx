@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Save, FileText } from 'lucide-react';
@@ -44,64 +46,84 @@ export function NotesModal({ lead, isOpen, onClose, onSave }: NotesModalProps) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.7)' }}
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
           onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
             key="notes-panel"
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 20 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-            className="w-full max-w-lg bg-white dark:bg-[#11111a] rounded-2xl shadow-2xl dark:shadow-none dark:border dark:border-[#1f1f2e] overflow-hidden"
+            exit={{ opacity: 0, scale: 0.96, y: 18 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            className="w-full max-w-lg rounded-3xl overflow-hidden"
+            style={{
+              background: 'var(--surface-overlay)',
+              border: '1px solid var(--glass-border)',
+              boxShadow: 'var(--shadow-modal)',
+              backdropFilter: 'blur(var(--glass-blur))',
+            }}
             onKeyDown={handleKeyDown}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#1f1f2e]">
+            <div className="flex items-center justify-between px-6 py-4"
+              style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <FileText className="w-5 h-5 text-amber-500" />
                 </div>
                 <div>
-                  <h3 className="text-gray-900 dark:text-white font-semibold">Edit Notes</h3>
-                  <p className="text-gray-400 dark:text-gray-500 text-xs">{lead.name} · {lead.company}</p>
+                  <h3 className="text-[var(--text-primary)] text-lg font-semibold tracking-tight">Edit Notes</h3>
+                  <p className="text-[var(--text-secondary)] text-xs">{lead.name} · {lead.company}</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a24] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--input-bg)]"
               >
-                <X className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                <X className="w-4 h-4 text-[var(--text-tertiary)]" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="px-6 py-4">
+            <div className="px-6 py-5">
               <textarea
                 ref={textareaRef}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full h-48 resize-none rounded-xl border border-gray-200 dark:border-[#2a2a3a] bg-gray-50 dark:bg-[#0a0a0f] px-4 py-3 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all placeholder-gray-400 dark:placeholder-gray-600"
+                className="w-full h-48 resize-none rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none transition-all placeholder:text-[var(--text-tertiary)] placeholder:opacity-50"
+                style={{
+                  background: 'var(--input-bg)',
+                  border: '1px solid var(--border-default)',
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
+                }}
                 placeholder="Add notes about this lead..."
               />
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">⌘ + Enter to save · Esc to cancel</p>
+              <p className="text-[10px] text-[var(--text-tertiary)] mt-2 flex items-center gap-2">
+                <span>Press <kbd className="font-sans px-1.5 py-0.5 rounded text-[var(--text-secondary)] bg-[var(--input-bg)] border border-[var(--border-subtle)] mx-0.5">⌘</kbd> + <kbd className="font-sans px-1.5 py-0.5 rounded text-[var(--text-secondary)] bg-[var(--input-bg)] border border-[var(--border-subtle)] mx-0.5">Enter</kbd> to save</span>
+                <span className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
+                <span>Press <kbd className="font-sans px-1.5 py-0.5 rounded text-[var(--text-secondary)] bg-[var(--input-bg)] border border-[var(--border-subtle)] mx-0.5">Esc</kbd> to cancel</span>
+              </p>
             </div>
 
             {/* Footer */}
             <div className="px-6 pb-5 flex items-center justify-end gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a24] transition-colors font-medium"
+                className="px-4 py-2 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[var(--input-bg)] transition-colors font-medium"
               >
                 Cancel
               </button>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleSave}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors"
+                className="btn-premium flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-semibold transition-colors"
+                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', border: '1px solid rgba(245,158,11,0.3)' }}
               >
                 <Save className="w-3.5 h-3.5" />
                 Save Notes
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         </motion.div>

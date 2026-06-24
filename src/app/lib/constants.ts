@@ -2,10 +2,10 @@ import { ActivityType } from '../types/activity';
 import { LeadImportField } from '../types/import';
 import { CheckCircle, XCircle, Voicemail, SkipForward, Mail, Phone, FileText } from 'lucide-react';
 
-export const CARD_WIDTH    = 420;
-export const CARD_HEIGHT   = 390;
-export const CARD_STRIDE   = 450;
-export const CONTAINER_H   = 630;
+export const CARD_WIDTH    = 700;
+export const CARD_HEIGHT   = 360;
+export const CARD_STRIDE   = 400;
+export const CONTAINER_H   = 600;
 export const CENTER_Y      = (CONTAINER_H - CARD_HEIGHT) / 2;
 
 export const actionMeta: Record<ActivityType, {

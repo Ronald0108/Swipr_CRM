@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import {
   Award,
   CheckCircle,
-  Download,
   Plus,
   RefreshCw,
   SkipForward,
+  Upload,
   Users,
   Voicemail,
   XCircle,
+  Loader2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { LeadCard, type SwipeAction } from '@/app/components/LeadCard';
@@ -18,6 +19,7 @@ import { NotesModal } from '@/app/components/NotesModal';
 import { EmailDraftModal } from '@/app/components/EmailDraftModal';
 import { CrmModal } from '@/app/components/dashboard/CrmModal';
 import { ImportModal } from '@/app/components/dashboard/ImportModal';
+import { ExportModal } from '@/app/components/dashboard/ExportModal';
 import { DeleteConfirmDialog } from '@/app/components/dashboard/DeleteConfirmDialog';
 import {
   useApp,
@@ -34,6 +36,7 @@ import { StatsBar } from '@/app/components/dashboard/StatsBar';
 import { CallNoticeToast } from '@/app/components/CallNoticeToast';
 import { CallOutcomeModal } from '@/app/components/CallOutcomeModal';
 import { SettingsMenu } from '@/app/components/dashboard/SettingsMenu';
+import { StatsSidebar } from '@/app/components/dashboard/StatsSidebar';
 
 
 
@@ -62,7 +65,6 @@ export default function HomePage() {
     isAnimatingRef, cardAreaRef,
     csvHeaders, csvRows, csvPreviewRows, columnMapping, setColumnMapping,
     importFileName, importError, setImportError, importSuccess, setImportSuccess, importing,
-    handleCsvSelected, clearCsvSelection, handleImportLeads,
     crmConnection, crmLastRun, crmAction, crmError, setCrmError, crmResult, crmBusy,
     loadCrmStatus, startHubSpotOAuth, runHubSpotAction,
     getLeadStatusLabel, openLeadHistory, currentLeadIdRef,
@@ -109,16 +111,22 @@ export default function HomePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [triggerSwipeAction, navigatePrev, navigateNext, showNotesModal, showEmailModal, currentLead, openLeadHistory, promptLeadCall, promptLeadEmail, setPressedKey, setShowNotesModal, addActivity]);
 
-  // ── Modals extracted ──
-
   // ── Auth loading ──
   if (authLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#0a0a0f]">
-        <div className="text-center">
-          <p className="text-white text-lg font-semibold">Loading Swipr CRM...</p>
-          <p className="text-gray-500 text-sm mt-2">Checking your session</p>
-        </div>
+      <div className="h-screen w-screen flex items-center justify-center transition-colors duration-300" style={{ background: 'var(--surface-base)' }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(99,102,241,0.12)' }}>
+            <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+          </div>
+          <p className="text-white/80 text-sm font-semibold">Loading SwiprCRM</p>
+          <p className="text-white/20 text-xs mt-1">Checking your session…</p>
+        </motion.div>
       </div>
     );
   }
@@ -127,35 +135,72 @@ export default function HomePage() {
   if (!session) {
     return (
       <div className="login-gradient-bg h-screen w-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl border p-8 bg-[#13131a] border-[#1c1c2a]">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-md rounded-3xl p-8"
+          style={{
+            background: 'var(--panel-bg)',
+            border: '1px solid var(--glass-border)',
+            boxShadow: 'var(--shadow-modal)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+          }}
+        >
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <img src="/images/logo_transparent.png" alt="Swipr CRM Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h1 className="text-white text-2xl font-bold tracking-tight">SwiprCRM</h1>
-              <p className="text-gray-400 text-sm"></p>
+              <h1 className="text-[var(--text-primary)] text-xl font-bold tracking-tight">SwiprCRM</h1>
+              <p className="text-[var(--text-tertiary)] text-xs">Sign in to your account</p>
             </div>
           </div>
           <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void handleLogin(); }}>
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email"
-                className="w-full rounded-xl border px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none bg-[#0a0a0f] border-[#1c1c2a]" />
+              <label className="block text-[11px] text-white/40 font-medium mb-1.5 uppercase tracking-wider">Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com"
+                className="w-full rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                style={{ background: 'var(--input-bg)', border: '1px solid var(--border-default)' }} />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password"
-                className="w-full rounded-xl border px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none bg-[#0a0a0f] border-[#1c1c2a]" />
+              <label className="block text-[11px] text-white/40 font-medium mb-1.5 uppercase tracking-wider">Password</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
+                className="w-full rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                style={{ background: 'var(--input-bg)', border: '1px solid var(--border-default)' }} />
             </div>
-            {authError ? (<div className="rounded-xl border px-3 py-2 text-sm text-rose-300 bg-[#2a1117] border-[#5a1f2b]">{authError}</div>) : null}
+            {authError ? (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl px-3 py-2.5 text-xs text-rose-300/90 flex items-start gap-2"
+                style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}
+              >
+                <XCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-rose-400" />
+                {authError}
+              </motion.div>
+            ) : null}
             <div className="pt-2">
-              <button type="submit" disabled={authSubmitting} className="w-full rounded-xl px-4 py-3 text-white font-semibold transition-colors disabled:opacity-60 bg-[#4f46e5]">
-                {authSubmitting ? 'Loading...' : 'Log In'}
-              </button>
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                type="submit" disabled={authSubmitting}
+                className="btn-premium w-full rounded-xl px-4 py-3 text-sm text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{
+                  background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                  boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
+                }}
+              >
+                {authSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Signing in…
+                  </>
+                ) : 'Sign In'}
+              </motion.button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -163,10 +208,14 @@ export default function HomePage() {
   // ── Leads loading ──
   if (leadsLoading && leads.length === 0) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#0a0a0f]">
-        <div className="text-center">
-          <p className="text-white text-lg font-semibold">Loading SwiprCRM...</p>
-        </div>
+      <div className="h-screen w-screen flex items-center justify-center transition-colors duration-300" style={{ background: 'var(--surface-base)' }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+            style={{ background: 'var(--accent-indigo-soft)' }}>
+            <Loader2 className="w-5 h-5 text-indigo-500 animate-spin" />
+          </div>
+          <p className="text-[var(--text-primary)] text-sm font-semibold">Loading your leads…</p>
+        </motion.div>
       </div>
     );
   }
@@ -174,40 +223,66 @@ export default function HomePage() {
   // ── Empty state ──
   if (leads.length === 0) {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#0a0a0f]">
-        <header className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b border-[#1c1c2a]">
+      <div className="h-screen w-screen overflow-hidden flex flex-col transition-colors duration-300" style={{ background: 'var(--surface-base)' }}>
+        <header className="flex-shrink-0 flex items-center justify-between px-5 py-2.5"
+          style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--glass-bg)', backdropFilter: 'blur(40px)' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center"
+              style={{ background: 'rgba(255,255,255,0.06)' }}>
               <img src="/images/logo_transparent.png" alt="Swipr CRM logo" className="w-full h-full object-cover" />
             </div>
+            <span className="text-[var(--text-primary)] text-sm font-semibold tracking-tight">SwiprCRM</span>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => void handleCreateLead()} disabled={creatingLead} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-60 bg-[#4f46e5] border-[#6366f1] border">
-              <Plus className="w-4 h-4" />{creatingLead ? 'Adding...' : 'Add Lead'}
-            </button>
-            <button onClick={() => { setShowCrmModal(true); setCrmError(''); void loadCrmStatus(); }} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2 bg-[#164e63] border border-[#0e7490]">
-              <RefreshCw className="w-4 h-4" />CRM Integration
-            </button>
-            <button onClick={() => { setShowImportModal(true); setImportError(''); setImportSuccess(''); }} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2 bg-[#312e81] border border-[#4338ca]">
-              <Download className="w-4 h-4" />Import Leads
-            </button>
+          <div className="flex items-center gap-2">
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              onClick={() => void handleCreateLead()} disabled={creatingLead}
+              className="btn-premium px-3 py-1.5 rounded-xl text-white/90 text-xs font-semibold flex items-center gap-2 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: '1px solid rgba(99,102,241,0.3)' }}>
+              <Plus className="w-3.5 h-3.5" />{creatingLead ? 'Adding…' : 'Add Lead'}
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              onClick={() => { setShowCrmModal(true); setCrmError(''); void loadCrmStatus(); }}
+              className="btn-premium px-3 py-1.5 rounded-xl text-white/90 text-xs font-semibold flex items-center gap-2"
+              style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.25)' }}>
+              <RefreshCw className="w-3.5 h-3.5" />Integrations
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              onClick={() => { setShowImportModal(true); setImportError(''); setImportSuccess(''); }}
+              className="btn-premium px-3 py-1.5 rounded-xl text-white/90 text-xs font-semibold flex items-center gap-2"
+              style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
+              <Upload className="w-3.5 h-3.5" />Import
+            </motion.button>
             <SettingsMenu />
           </div>
         </header>
         <main className="flex-1 flex items-center justify-center px-6 text-center">
-          <div>
-            <Users className="w-10 h-10 text-gray-700 mx-auto mb-4" />
-            <p className="text-white text-lg font-semibold">No leads loaded</p>
-            <p className="text-gray-500 text-sm mt-2">Add a lead manually or import a CSV to start reviewing leads.</p>
-            <button onClick={() => void handleCreateLead()} disabled={creatingLead} className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60 bg-[#4f46e5]">
-              <Plus className="w-4 h-4" />{creatingLead ? 'Adding...' : 'Add Lead'}
-            </button>
-            <button onClick={() => { setShowCrmModal(true); setCrmError(''); void loadCrmStatus(); }} className="ml-3 mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors bg-[#164e63]">
-              <RefreshCw className="w-4 h-4" />CRM Integration
-            </button>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="w-16 h-16 rounded-3xl mx-auto mb-5 flex items-center justify-center"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <Users className="w-7 h-7 text-[var(--text-tertiary)]" />
+            </div>
+            <p className="text-[var(--text-primary)] text-lg font-semibold">No leads yet</p>
+            <p className="text-[var(--text-secondary)] text-sm mt-2 max-w-xs mx-auto">Add leads manually, import from a file, or connect your CRM to get started.</p>
+            <div className="flex items-center gap-3 justify-center mt-6">
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                onClick={() => void handleCreateLead()} disabled={creatingLead}
+                className="btn-premium inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+                <Plus className="w-4 h-4" />{creatingLead ? 'Adding…' : 'Add Lead'}
+              </motion.button>
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                onClick={() => { setShowCrmModal(true); setCrmError(''); void loadCrmStatus(); }}
+                className="btn-premium inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white/80"
+                style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.25)' }}>
+                <RefreshCw className="w-4 h-4" />Connect CRM
+              </motion.button>
+            </div>
+          </motion.div>
         </main>
-        {/* Import modal (empty state) */}
         <ImportModal />
         <CrmModal />
       </div>
@@ -216,7 +291,7 @@ export default function HomePage() {
 
   // ── Main rolodex view ──
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#0a0a0f]">
+    <div className="h-screen w-screen overflow-hidden flex flex-col transition-colors duration-300" style={{ background: 'var(--surface-base)' }}>
       {/* ── TOP BAR ── */}
       <StatsBar />
 
@@ -235,25 +310,46 @@ export default function HomePage() {
         <div className="flex-1 flex flex-col items-center justify-center py-4 relative">
           {isDone ? (
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto mb-5">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
+                style={{ background: 'linear-gradient(135deg, #10B981, #14B8A6)' }}>
                 <Award className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-white mb-2">All Leads Reviewed!</h2>
-              <p className="text-gray-400 text-sm mb-6">{statsCount.connected} connected · {statsCount.voicemail} voicemails · {statsCount.lost} lost</p>
-              <button onClick={() => { setCurrentIndex(0); currentLeadIdRef.current = leads[0]?.id ?? null; void fetchLeads('reset'); setStatsCount({ connected: 0, lost: 0, voicemail: 0, next: 0 }); setActivityLog([]); }}
-                className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors">Back to First Lead</button>
+              <h2 className="text-[var(--text-primary)] text-xl font-bold mb-2">All Leads Reviewed!</h2>
+              <p className="text-[var(--text-secondary)] text-sm mb-6">{statsCount.connected} connected · {statsCount.voicemail} voicemails · {statsCount.lost} lost</p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => { setCurrentIndex(0); currentLeadIdRef.current = leads[0]?.id ?? null; void fetchLeads('reset'); setStatsCount({ connected: 0, lost: 0, voicemail: 0, next: 0 }); setActivityLog([]); }}
+                className="btn-premium px-6 py-3 rounded-xl text-white font-semibold"
+                style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
+              >
+                Back to First Lead
+              </motion.button>
             </motion.div>
           ) : (
             <>
               <div ref={cardAreaRef} className="relative overflow-hidden" style={{ width: CARD_WIDTH, height: CONTAINER_H }}>
                 {leads.map((lead, i) => {
                   const offset = i - currentIndex;
-                  if (Math.abs(offset) > 1) return null;
+                  if (Math.abs(offset) > 3) return null;
                   return (
-                    <motion.div key={lead.id} className="absolute inset-x-0"
+                    <motion.div key={lead.id} className="absolute inset-x-0 mx-auto"
                       style={{ height: CARD_HEIGHT, top: 0, pointerEvents: offset === 0 ? 'auto' : 'none', zIndex: offset === 0 ? 10 : 1 }}
-                      animate={{ y: offset * CARD_STRIDE + CENTER_Y, scale: offset === 0 ? 1 : 0.87, opacity: offset === 0 ? 1 : 0.38 }}
-                      transition={{ type: 'spring', stiffness: 280, damping: 28 }}>
+                      animate={{ 
+                        y: offset * CARD_STRIDE + CENTER_Y, 
+                        x: 0, 
+                        scale: 1, 
+                        opacity: Math.max(0, 1 - Math.abs(offset))
+                      }}
+                      transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+                      drag={offset === 0 ? 'x' : false}
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.8}
+                      onDragEnd={(_, info) => {
+                        if (info.offset.x > 200) triggerSwipeAction('connected', addActivity);
+                        else if (info.offset.x < -200) triggerSwipeAction('lost', addActivity);
+                      }}
+                    >
                       <LeadCard lead={lead} overlayInfo={overlayInfo} cardIndex={i}
                         onEdit={(field, value) => handleLeadEdit(lead.id, field, value)}
                         isActive={offset === 0}
@@ -268,24 +364,12 @@ export default function HomePage() {
             </>
           )}
         </div>
+
+        {/* ── RIGHT SIDEBAR: Stats & CRM Sync ── */}
+        <StatsSidebar />
       </main>
 
       <CallNoticeToast notice={callNotice} />
-
-      <div className="fixed bottom-20 right-5 z-40 grid grid-cols-2 gap-1.5 rounded-xl border border-[#1c1c2a] bg-[#0e0e17]/95 p-1.5 shadow-2xl" style={{ backdropFilter: 'blur(14px)' }}>
-        {([
-          { icon: CheckCircle, count: statsCount.connected, color: 'text-emerald-400', label: 'Connected' },
-          { icon: XCircle, count: statsCount.lost, color: 'text-rose-400', label: 'Lost' },
-          { icon: Voicemail, count: statsCount.voicemail, color: 'text-amber-400', label: 'Voicemail' },
-          { icon: SkipForward, count: statsCount.next, color: 'text-sky-400', label: 'Skipped' },
-        ] as const).map(({ icon: Icon, count, color, label }) => (
-          <div key={label} className="flex items-center gap-1.5 rounded-lg bg-[#13131a] px-2 py-1.5">
-            <Icon className={`h-3.5 w-3.5 ${color}`} />
-            <span className="text-xs font-semibold text-white">{count}</span>
-            <span className="hidden text-[10px] text-gray-500 sm:inline">{label}</span>
-          </div>
-        ))}
-      </div>
 
       {/* ── BOTTOM KEYBOARD LEGEND ── */}
       <KeyboardLegend />
@@ -306,6 +390,9 @@ export default function HomePage() {
       <AnimatePresence>
         <DeleteConfirmDialog />
       </AnimatePresence>
+      <ImportModal />
+      <CrmModal />
+      <ExportModal />
     </div>
   );
 }

@@ -73,3 +73,12 @@ export async function insertLeadActivity(userId: string, leadId: string, activit
 
   return mapRowToLeadActivity(data as LeadActivityRow);
 }
+
+export async function deleteLeadActivity(activityId: string) {
+  const { error } = await supabase
+    .from('lead_activities')
+    .delete()
+    .eq('id', activityId);
+
+  if (error) throw error;
+}

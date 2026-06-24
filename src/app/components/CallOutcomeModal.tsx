@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Phone, CheckCircle, Voicemail, PhoneMissed, PhoneOff, AlertTriangle, X } from 'lucide-react';
+import { Phone, CheckCircle, Voicemail, PhoneMissed, PhoneOff, AlertTriangle, X, Save } from 'lucide-react';
 import type { Lead } from '../data/leads';
 import type { CallOutcome } from '../types/activity';
 import { formatPhoneDisplay } from '../lib/utils';
@@ -22,11 +22,11 @@ const OUTCOME_OPTIONS: {
   bg: string;
   border: string;
 }[] = [
-  { value: 'connected',    label: 'Connected',    Icon: CheckCircle,   color: 'text-emerald-400', bg: 'bg-emerald-500/15 hover:bg-emerald-500/25', border: 'border-emerald-500/30' },
-  { value: 'voicemail',    label: 'Voicemail',    Icon: Voicemail,     color: 'text-amber-400',   bg: 'bg-amber-500/15 hover:bg-amber-500/25',     border: 'border-amber-500/30'   },
-  { value: 'no_answer',    label: 'No Answer',    Icon: PhoneMissed,   color: 'text-sky-400',     bg: 'bg-sky-500/15 hover:bg-sky-500/25',         border: 'border-sky-500/30'     },
-  { value: 'busy',         label: 'Busy',         Icon: PhoneOff,      color: 'text-orange-400',  bg: 'bg-orange-500/15 hover:bg-orange-500/25',   border: 'border-orange-500/30'  },
-  { value: 'wrong_number', label: 'Wrong Number', Icon: AlertTriangle, color: 'text-rose-400',    bg: 'bg-rose-500/15 hover:bg-rose-500/25',       border: 'border-rose-500/30'    },
+  { value: 'connected',    label: 'Connected',    Icon: CheckCircle,   color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10 dark:bg-emerald-500/15', border: 'border-emerald-500/30' },
+  { value: 'voicemail',    label: 'Voicemail',    Icon: Voicemail,     color: 'text-amber-600 dark:text-amber-400',   bg: 'bg-amber-500/10 dark:bg-amber-500/15',     border: 'border-amber-500/30'   },
+  { value: 'no_answer',    label: 'No Answer',    Icon: PhoneMissed,   color: 'text-sky-600 dark:text-sky-400',     bg: 'bg-sky-500/10 dark:bg-sky-500/15',         border: 'border-sky-500/30'     },
+  { value: 'busy',         label: 'Busy',         Icon: PhoneOff,      color: 'text-orange-600 dark:text-orange-400',  bg: 'bg-orange-500/10 dark:bg-orange-500/15',   border: 'border-orange-500/30'  },
+  { value: 'wrong_number', label: 'Wrong Number', Icon: AlertTriangle, color: 'text-rose-600 dark:text-rose-400',    bg: 'bg-rose-500/10 dark:bg-rose-500/15',       border: 'border-rose-500/30'    },
 ];
 
 export function CallOutcomeModal({ lead, isOpen, onClose, onSave }: CallOutcomeModalProps) {
@@ -57,41 +57,49 @@ export function CallOutcomeModal({ lead, isOpen, onClose, onSave }: CallOutcomeM
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          style={{ backdropFilter: 'blur(6px)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
           onClick={handleClose}
         >
           <motion.div
             key="call-outcome-panel"
-            initial={{ opacity: 0, y: 40, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+            initial={{ opacity: 0, scale: 0.96, y: 18 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 18 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl border border-[#1f1f2e] bg-[#13131a] shadow-2xl overflow-hidden"
+            className="w-full max-w-md rounded-3xl overflow-hidden"
+            style={{
+              background: 'var(--surface-overlay)',
+              border: '1px solid var(--glass-border)',
+              boxShadow: 'var(--shadow-modal)',
+              backdropFilter: 'blur(var(--glass-blur))',
+            }}
           >
             {/* ── Header ── */}
-            <div className="flex items-center justify-between border-b border-[#1f1f2e] px-5 py-4">
+            <div className="flex items-center justify-between px-6 py-4"
+              style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center">
-                  <Phone className="w-4.5 h-4.5 text-blue-400" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <Phone className="w-5 h-5 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold text-sm">Call Outcome</p>
-                  <p className="text-gray-500 text-xs">{lead.name} · {formatPhoneDisplay(lead.phone)}</p>
+                  <h3 className="text-[var(--text-primary)] text-lg font-semibold tracking-tight">Call Outcome</h3>
+                  <p className="text-[var(--text-secondary)] text-xs">{lead.name} · {formatPhoneDisplay(lead.phone)}</p>
                 </div>
               </div>
               <button
                 onClick={handleClose}
-                className="rounded-lg p-1.5 text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--input-bg)]"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-[var(--text-tertiary)]" />
               </button>
             </div>
 
             {/* ── Outcome Buttons ── */}
-            <div className="px-5 py-4">
-              <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">What happened?</p>
+            <div className="px-6 py-5">
+              <p className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.15em] mb-3">What happened?</p>
               <div className="grid grid-cols-2 gap-2">
                 {OUTCOME_OPTIONS.map(({ value, label, Icon, color, bg, border }) => {
                   const isSelected = selectedOutcome === value;
@@ -100,14 +108,14 @@ export function CallOutcomeModal({ lead, isOpen, onClose, onSave }: CallOutcomeM
                       key={value}
                       type="button"
                       onClick={() => setSelectedOutcome(value)}
-                      className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all ${
-                        isSelected
-                          ? `${bg} ${border} ring-1 ring-current/20`
-                          : 'border-[#1f1f2e] bg-[#0e0e17] hover:bg-[#1a1a28] text-gray-300'
+                      className={`flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold border transition-all ${
+                        isSelected 
+                          ? `${bg} ${border}` 
+                          : 'bg-[var(--input-bg)] border-[var(--border-subtle)] hover:bg-[var(--input-bg)]/80'
                       }`}
                     >
-                      <Icon className={`w-4 h-4 ${isSelected ? color : 'text-gray-500'}`} />
-                      <span className={isSelected ? color : ''}>{label}</span>
+                      <Icon className={`w-4 h-4 ${isSelected ? color : 'text-[var(--text-tertiary)]'}`} />
+                      <span className={isSelected ? color : 'text-[var(--text-secondary)]'}>{label}</span>
                     </button>
                   );
                 })}
@@ -115,33 +123,42 @@ export function CallOutcomeModal({ lead, isOpen, onClose, onSave }: CallOutcomeM
             </div>
 
             {/* ── Notes ── */}
-            <div className="px-5 pb-4">
-              <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">Call Notes</p>
+            <div className="px-6 pb-5">
+              <p className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.15em] mb-2.5">Call Notes</p>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
                 rows={3}
                 placeholder="Add notes about the call..."
-                className="w-full rounded-xl border border-[#1f1f2e] bg-[#0a0a0f] px-3.5 py-2.5 text-sm text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-indigo-500/50 resize-none transition-colors"
+                className="w-full rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none transition-all placeholder:text-[var(--text-tertiary)] placeholder:opacity-50 resize-none"
+                style={{
+                  background: 'var(--input-bg)',
+                  border: '1px solid var(--border-default)',
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
+                }}
               />
             </div>
 
             {/* ── Actions ── */}
-            <div className="flex items-center justify-end gap-2 border-t border-[#1f1f2e] px-5 py-3">
+            <div className="flex items-center justify-end gap-3 px-6 pb-5">
               <button
                 onClick={handleClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--input-bg)] transition-colors"
               >
                 Skip
               </button>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleSave}
                 disabled={!selectedOutcome}
-                className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="btn-premium flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-semibold transition-all disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)', border: '1px solid rgba(59,130,246,0.3)' }}
               >
+                <Save className="w-3.5 h-3.5" />
                 Save Outcome
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         </motion.div>
