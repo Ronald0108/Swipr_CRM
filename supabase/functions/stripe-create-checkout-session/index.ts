@@ -24,12 +24,15 @@ Deno.serve(async (req) => {
     const { supabase, user } = await getAuthenticatedUser(req);
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const plan = body.plan as BillingPlan;
+    const organizationId = body.organizationId;
+    
+    if (!organizationId) throw new Error('Missing organizationId');
     if (plan !== 'individual' && plan !== 'team') throw new Error('Choose an Individual or Team plan.');
 
     const { data: profile, error: profileError } = await supabase
       .from('billing_profiles')
       .select('stripe_customer_id')
-      .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
       .maybeSingle();
     if (profileError) throw profileError;
 
@@ -40,6 +43,7 @@ Deno.serve(async (req) => {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formBody({
           email: user.email,
+          'metadata[organization_id]': organizationId,
           'metadata[user_id]': user.id,
         }),
       });
@@ -48,11 +52,11 @@ Deno.serve(async (req) => {
       const { error } = await supabase
         .from('billing_profiles')
         .upsert({
-          user_id: user.id,
+          organization_id: organizationId,
           stripe_customer_id: stripeCustomerId,
           plan: 'free',
           status: 'free',
-        }, { onConflict: 'user_id' });
+        }, { onConflict: 'organization_id' });
       if (error) throw error;
     }
 
@@ -69,8 +73,10 @@ Deno.serve(async (req) => {
         allow_promotion_codes: true,
         'line_items[0][price]': getPriceIdForPlan(plan),
         'line_items[0][quantity]': 1,
+        'metadata[organization_id]': organizationId,
         'metadata[user_id]': user.id,
         'metadata[plan]': plan,
+        'subscription_data[metadata][organization_id]': organizationId,
         'subscription_data[metadata][user_id]': user.id,
         'subscription_data[metadata][plan]': plan,
       }),

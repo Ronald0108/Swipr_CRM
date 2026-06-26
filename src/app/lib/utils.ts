@@ -64,9 +64,9 @@ export function guessImportMapping(headers: string[]) {
   }, {} as Record<string, LeadImportField>);
 }
 
-export function buildLeadImportPayload(row: CsvPreviewRow, mapping: Record<string, LeadImportField>, userId: string) {
+export function buildLeadImportPayload(row: CsvPreviewRow, mapping: Record<string, LeadImportField>, userId: string, organizationId: string) {
   const payload: Record<string, unknown> = {
-    user_id: userId, name: '', title: '', company: '', industry: '', phone: '', email: '',
+    user_id: userId, organization_id: organizationId, name: '', title: '', company: '', industry: '', phone: '', email: '',
     score: 0, status: 'new', notes: '', source: 'CSV Import', location: '', timezone: '', tags: [], last_contact: '',
   };
   let firstName = '';
@@ -90,11 +90,13 @@ export function buildLeadImportPayload(row: CsvPreviewRow, mapping: Record<strin
   return payload;
 }
 
-export function buildBlankLeadPayload(userId: string) {
-  return {
+export function buildBlankLeadPayload(userId: string, organizationId?: string) {
+  const payload: any = {
     user_id: userId, name: '', title: '', company: '', industry: '', phone: '', email: '',
     score: 0, status: 'new', notes: '', source: 'Manual Entry', location: '', timezone: '', tags: [], last_contact: '',
   };
+  if (organizationId) payload.organization_id = organizationId;
+  return payload;
 }
 
 const LEAD_FIELD_COLUMN_MAP: Partial<Record<keyof Lead, string>> = {

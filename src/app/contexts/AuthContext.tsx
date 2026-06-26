@@ -48,8 +48,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); setAuthLoading(false); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { setSession(session); setAuthLoading(false); });
+    supabase.auth.getSession().then(({ data: { session: newSession } }) => { 
+      setSession(newSession); 
+      setAuthLoading(false); 
+    });
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => { 
+      setSession(prev => {
+        if (prev?.access_token === newSession?.access_token) return prev;
+        return newSession;
+      });
+      setAuthLoading(false); 
+    });
+    
     return () => subscription.unsubscribe();
   }, []);
 

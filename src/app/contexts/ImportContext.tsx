@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
+import { useOrganization } from './OrganizationContext';
 import { useLeads } from './LeadsContext';
 import { LeadImportField, CsvPreviewRow } from '../types/import';
 import { guessImportMapping, buildLeadImportPayload } from '../lib/utils';
@@ -41,6 +42,7 @@ export function useImport() {
 
 export function ImportProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
+  const { activeOrganization } = useOrganization();
   const { fetchLeads } = useLeads();
 
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -143,8 +145,14 @@ export function ImportProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      if (!activeOrganization) {
+        setImportError('No active organization selected.');
+        setImporting(false);
+        return;
+      }
+
       const payload = csvRows
-        .map((row) => buildLeadImportPayload(row, columnMapping, session.user.id))
+        .map((row) => buildLeadImportPayload(row, columnMapping, session.user.id, activeOrganization.id))
         .filter((row) => String(row.name ?? '').trim() || String(row.company ?? '').trim() || String(row.email ?? '').trim());
 
       if (payload.length === 0) {
@@ -177,7 +185,7 @@ export function ImportProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setImporting(false);
     }
-  }, [columnMapping, csvHeaders.length, csvRows, fetchLeads, session]);
+  }, [columnMapping, csvHeaders.length, csvRows, fetchLeads, session, activeOrganization]);
 
   return (
     <ImportContext.Provider value={{

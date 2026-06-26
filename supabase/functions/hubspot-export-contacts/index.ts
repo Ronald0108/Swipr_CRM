@@ -35,9 +35,17 @@ Deno.serve(async (req) => {
   const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [] as string[] };
 
   try {
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const organizationId = body.organizationId;
+    if (!organizationId) throw new Error('Missing organizationId');
+
     const { supabase, user } = await getAuthenticatedUser(req);
-    const connection = await getActiveConnection(user.id);
-    const syncRun = await createSyncRun(user.id, connection.id, 'export');
+    
+    const { data: member } = await supabase.from('organization_members').select('id').eq('organization_id', organizationId).eq('user_id', user.id).maybeSingle();
+    if (!member) throw new Error('Unauthorized for this organization.');
+
+    const connection = await getActiveConnection(organizationId);
+    const syncRun = await createSyncRun(user.id, organizationId, connection.id, 'export');
     runId = syncRun.id;
     const accessToken = await refreshHubSpotToken(connection.id);
     const propertyNames = await fetchHubSpotContactPropertyNames(accessToken);
@@ -45,7 +53,7 @@ Deno.serve(async (req) => {
     const { data: leads, error: leadsError } = await supabase
       .from('leads')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('organization_id', organizationId);
     if (leadsError) throw leadsError;
 
     for (const lead of leads ?? []) {
@@ -53,7 +61,7 @@ Deno.serve(async (req) => {
         const { data: link } = await supabase
           .from('crm_contact_links')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .eq('provider', 'hubspot')
           .eq('lead_id', lead.id)
           .maybeSingle();
@@ -77,6 +85,7 @@ Deno.serve(async (req) => {
         }
 
         await supabase.from('crm_contact_links').upsert({
+          organization_id: organizationId,
           user_id: user.id,
           lead_id: lead.id,
           provider: 'hubspot',
@@ -84,7 +93,7 @@ Deno.serve(async (req) => {
           remote_updated_at: new Date().toISOString(),
           last_synced_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,provider,lead_id' });
+        }, { onConflict: 'organization_id,provider,lead_id' });
 
         await supabase
           .from('leads')
@@ -94,12 +103,12 @@ Deno.serve(async (req) => {
             crm_last_synced_at: new Date().toISOString(),
           })
           .eq('id', lead.id)
-          .eq('user_id', user.id);
+          .eq('organization_id', organizationId);
 
         const { data: activities } = await supabase
           .from('lead_activities')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .eq('lead_id', lead.id)
           .order('created_at', { ascending: false })
           .limit(10);

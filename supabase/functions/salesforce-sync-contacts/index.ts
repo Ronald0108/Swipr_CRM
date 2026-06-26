@@ -1,4 +1,12 @@
-import { createSyncRun, finishSyncRun, getActiveConnection, getAuthenticatedUser, jsonResponse, optionsResponse, updateConnectionSyncTime } from '../_shared/hubspot.ts';
+import {
+  createSyncRun,
+  finishSyncRun,
+  getActiveConnection,
+  getAuthenticatedUser,
+  jsonResponse,
+  optionsResponse,
+  updateConnectionSyncTime,
+} from '../_shared/salesforce.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return optionsResponse();
@@ -40,8 +48,8 @@ Deno.serve(async (req) => {
       return responseBody.result;
     };
 
-    const imported = await invoke('hubspot-import-contacts');
-    const exported = await invoke('hubspot-export-contacts');
+    const imported = await invoke('salesforce-import-contacts');
+    const exported = await invoke('salesforce-export-contacts');
     const result = {
       created: Number(imported.created ?? 0) + Number(exported.created ?? 0),
       updated: Number(imported.updated ?? 0) + Number(exported.updated ?? 0),
@@ -55,7 +63,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ result });
   } catch (error) {
     emptyResult.failed = 1;
-    emptyResult.errors = [error instanceof Error ? error.message : 'HubSpot sync failed.'];
+    emptyResult.errors = [error instanceof Error ? error.message : 'Salesforce sync failed.'];
     if (runId) await finishSyncRun(runId, emptyResult, 'error');
     return jsonResponse({ error: emptyResult.errors[0], result: emptyResult }, 400);
   }

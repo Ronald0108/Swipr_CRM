@@ -1,4 +1,10 @@
-import { encryptToken, exchangeCodeForTokens, getAdminClient, getHubSpotIdentity, getHubSpotScopes } from '../_shared/hubspot.ts';
+import { getCrmAdapter } from '../_shared/crm-adapter.ts';
+import {
+  encryptToken,
+  getAdminClient,
+  getSalesforceRedirectUri,
+} from '../_shared/salesforce.ts';
+import '../_shared/salesforce.ts'; // Ensure adapter is registered
 
 Deno.serve(async (req) => {
   const url = new URL(req.url);
@@ -7,35 +13,38 @@ Deno.serve(async (req) => {
   const appOrigin = Deno.env.get('APP_ORIGIN') ?? Deno.env.get('SITE_URL') ?? 'http://localhost:5173';
 
   try {
-    if (!code || !state) throw new Error('Missing HubSpot OAuth code or state.');
+    if (!code || !state) throw new Error('Missing Salesforce OAuth code or state.');
 
     const supabase = getAdminClient();
     const { data: oauthState, error: stateError } = await supabase
       .from('crm_oauth_states')
       .select('*')
       .eq('state', state)
-      .eq('provider', 'hubspot')
+      .eq('provider', 'salesforce')
       .single();
 
     if (stateError || !oauthState) throw new Error('Invalid OAuth state.');
     if (new Date(oauthState.expires_at).getTime() < Date.now()) throw new Error('Expired OAuth state.');
 
-    const tokenData = await exchangeCodeForTokens(code);
-    const identity = await getHubSpotIdentity(tokenData.access_token);
-    const expiresAt = new Date(Date.now() + Number(tokenData.expires_in ?? 1800) * 1000).toISOString();
+    const adapter = getCrmAdapter('salesforce');
+    const tokenData = await adapter.exchangeCodeForTokens(code, getSalesforceRedirectUri());
+    const identity = await adapter.getIdentity(tokenData.accessToken);
+    
+    const expiresAt = new Date(Date.now() + Number(tokenData.expiresIn ?? 7200) * 1000).toISOString();
 
     const { data: connection, error: connectionError } = await supabase
       .from('crm_connections')
       .upsert({
-        organization_id: oauthState.organization_id,
         user_id: oauthState.user_id,
-        provider: 'hubspot',
-        portal_id: String(identity.hub_id ?? identity.hubId ?? ''),
-        account_name: identity.hub_domain ?? identity.user ?? 'HubSpot',
+        organization_id: oauthState.organization_id,
+        provider: 'salesforce',
+        portal_id: identity.portalId,
+        account_name: identity.accountName,
         status: 'active',
-        scopes: getHubSpotScopes(),
+        scopes: tokenData.scope ? tokenData.scope.split(' ') : ['api', 'refresh_token', 'offline_access'],
         connected_at: new Date().toISOString(),
         expires_at: expiresAt,
+        instance_url: tokenData.instanceUrl,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'organization_id,provider' })
       .select('*')
@@ -43,14 +52,14 @@ Deno.serve(async (req) => {
 
     if (connectionError) throw connectionError;
 
-    const encryptedAccessToken = await encryptToken(tokenData.access_token);
-    const encryptedRefreshToken = await encryptToken(tokenData.refresh_token);
+    const encryptedAccessToken = await encryptToken(tokenData.accessToken);
+    const encryptedRefreshToken = await encryptToken(tokenData.refreshToken);
 
     const { error: tokenError } = await supabase
       .from('crm_connection_tokens')
       .upsert({
         connection_id: connection.id,
-        provider: 'hubspot',
+        provider: 'salesforce',
         access_token_ciphertext: encryptedAccessToken.ciphertext,
         access_token_iv: encryptedAccessToken.iv,
         refresh_token_ciphertext: encryptedRefreshToken.ciphertext,
@@ -63,9 +72,9 @@ Deno.serve(async (req) => {
 
     await supabase.from('crm_oauth_states').delete().eq('state', state);
 
-    return Response.redirect(`${oauthState.redirect_to ?? appOrigin}?hubspot=connected`, 302);
+    return Response.redirect(`${oauthState.redirect_to ?? appOrigin}?salesforce=connected`, 302);
   } catch (error) {
-    const message = encodeURIComponent(error instanceof Error ? error.message : 'HubSpot OAuth failed.');
-    return Response.redirect(`${appOrigin}?hubspot=error&message=${message}`, 302);
+    const message = encodeURIComponent(error instanceof Error ? error.message : 'Salesforce OAuth failed.');
+    return Response.redirect(`${appOrigin}?salesforce=error&message=${message}`, 302);
   }
 });

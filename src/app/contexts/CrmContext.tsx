@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 import { useLeads } from './LeadsContext';
 import { useModals } from './ModalContext';
+import { useOrganization } from './OrganizationContext';
 
 export type CrmProvider = 'hubspot' | 'salesforce' | 'pipedrive' | 'zoho';
 
@@ -148,6 +149,7 @@ const EDGE_FUNCTION_MAP: Record<CrmProvider, Record<string, string>> = {
 
 export function CrmProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
+  const { activeOrganization } = useOrganization();
   const { fetchLeads } = useLeads();
   const { showCallNoticeMessage } = useModals();
 
@@ -175,14 +177,14 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
   const crmLastRun = syncRuns['hubspot'] ?? null;
 
   const loadCrmStatus = useCallback(async () => {
-    if (!session) { setConnections([]); setSyncRuns({}); return; }
+    if (!session || !activeOrganization) { setConnections([]); setSyncRuns({}); return; }
     setCrmLoading(true);
     try {
       // Fetch ALL active connections (not just hubspot)
       const { data: allConnections, error: connectionError } = await supabase
         .from('crm_connections')
         .select('id, provider, portal_id, account_name, status, connected_at, last_synced_at')
-        .eq('user_id', session.user.id)
+        .eq('organization_id', activeOrganization.id)
         .neq('status', 'disconnected');
 
       if (connectionError) throw connectionError;
@@ -194,7 +196,7 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
         const { data: syncRun, error: syncRunError } = await supabase
           .from('crm_sync_runs')
           .select('id, provider, operation, status, created_count, updated_count, skipped_count, failed_count, errors, started_at, finished_at')
-          .eq('user_id', session.user.id)
+          .eq('organization_id', activeOrganization.id)
           .eq('provider', conn.provider)
           .order('started_at', { ascending: false })
           .limit(1)
@@ -210,10 +212,10 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setCrmLoading(false);
     }
-  }, [session]);
+  }, [session, activeOrganization]);
 
   const startOAuth = useCallback(async (provider: CrmProvider) => {
-    if (!session) return;
+    if (!session || !activeOrganization) return;
     const functionName = EDGE_FUNCTION_MAP[provider]?.['oauth-start'];
     if (!functionName) { setCrmError(`OAuth not available for ${provider}.`); return; }
 
@@ -222,7 +224,7 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
     setCrmError('');
     try {
       const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { redirectTo: window.location.origin },
+        body: { redirectTo: window.location.origin, organizationId: activeOrganization.id },
       });
       if (error) throw error;
       if (!data?.authUrl) throw new Error(`${provider} OAuth URL was not returned.`);
@@ -233,20 +235,20 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
       setCrmAction(null);
       setCrmActionProvider(null);
     }
-  }, [session]);
+  }, [session, activeOrganization]);
 
   const startHubSpotOAuth = useCallback(() => startOAuth('hubspot'), [startOAuth]);
 
   const runCrmAction = useCallback(async (provider: CrmProvider, action: 'import' | 'export' | 'sync' | 'disconnect') => {
     const functionName = EDGE_FUNCTION_MAP[provider]?.[action];
-    if (!functionName) { setCrmError(`Action "${action}" not available for ${provider}.`); return; }
+    if (!functionName || !activeOrganization) { setCrmError(`Action "${action}" not available for ${provider}.`); return; }
 
     setCrmAction(action);
     setCrmActionProvider(provider);
     setCrmError('');
     setCrmResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke(functionName, { body: {} });
+      const { data, error } = await supabase.functions.invoke(functionName, { body: { organizationId: activeOrganization.id } });
       if (error) throw error;
       setCrmResult((data?.result as CrmSyncResult | undefined) ?? null);
       await loadCrmStatus();
@@ -261,7 +263,7 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
       setCrmAction(null);
       setCrmActionProvider(null);
     }
-  }, [fetchLeads, loadCrmStatus]);
+  }, [fetchLeads, loadCrmStatus, activeOrganization]);
 
   const runHubSpotAction = useCallback(
     (action: 'import' | 'export' | 'sync' | 'disconnect') => runCrmAction('hubspot', action),
@@ -270,9 +272,9 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
 
   // Load CRM status on session change
   useEffect(() => {
-    if (session) { void loadCrmStatus(); }
+    if (session && activeOrganization) { void loadCrmStatus(); }
     else { setConnections([]); setSyncRuns({}); }
-  }, [loadCrmStatus, session]);
+  }, [loadCrmStatus, session, activeOrganization]);
 
   // Handle OAuth callback query params
   useEffect(() => {

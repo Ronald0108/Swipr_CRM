@@ -12,6 +12,7 @@ export interface TokenSet {
   refreshToken: string;
   expiresIn: number; // seconds
   scope?: string;
+  instanceUrl?: string;
 }
 
 export interface CrmIdentity {
@@ -84,16 +85,17 @@ export interface CrmAdapter {
   fetchContacts(accessToken: string): Promise<CrmContact[]>;
 
   /** Push leads to this CRM, creating or updating as needed */
-  pushContacts(accessToken: string, leads: LeadPayload[], userId: string): Promise<SyncResult>;
+  pushContacts(accessToken: string, leads: LeadPayload[], organizationId: string, userId: string): Promise<SyncResult>;
 }
 
 /**
  * Convert a CrmContact to a Supabase leads-table insert payload.
  */
-export function crmContactToLeadPayload(contact: CrmContact, userId: string, provider: CrmProvider) {
+export function crmContactToLeadPayload(contact: CrmContact, organizationId: string, userId: string, provider: CrmProvider) {
   const name = contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(' ').trim();
 
   return {
+    organization_id: organizationId,
     user_id: userId,
     name,
     title: contact.title || '',

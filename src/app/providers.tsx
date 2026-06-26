@@ -10,8 +10,10 @@ import { ImportProvider, useImport } from './contexts/ImportContext';
 import { actionMeta, CARD_WIDTH, CARD_HEIGHT, CARD_STRIDE, CONTAINER_H, CENTER_Y, IMPORTABLE_FIELDS } from './lib/constants';
 import { timeAgo } from './lib/utils';
 import { LeadImportField } from './types/import';
+import { OrganizationProvider, useOrganization } from './contexts/OrganizationContext';
 
 type AppContextType = ReturnType<typeof useAuth> &
+  ReturnType<typeof useOrganization> &
   ReturnType<typeof useLeads> &
   ReturnType<typeof useActivity> &
   ReturnType<typeof useModals> &
@@ -28,6 +30,7 @@ export function useApp() {
 
 function AppContextCombiner({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
+  const org = useOrganization();
   const leads = useLeads();
   const activity = useActivity();
   const modals = useModals();
@@ -36,6 +39,7 @@ function AppContextCombiner({ children }: { children: React.ReactNode }) {
 
   const value: AppContextType = {
     ...auth,
+    ...org,
     ...leads,
     ...activity,
     ...modals,
@@ -49,19 +53,21 @@ function AppContextCombiner({ children }: { children: React.ReactNode }) {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <LeadsProvider>
-        <ActivityProvider>
-          <ModalProvider>
-            <CrmProvider>
-              <ImportProvider>
-                <AppContextCombiner>
-                  {children}
-                </AppContextCombiner>
-              </ImportProvider>
-            </CrmProvider>
-          </ModalProvider>
-        </ActivityProvider>
-      </LeadsProvider>
+      <OrganizationProvider>
+        <LeadsProvider>
+          <ActivityProvider>
+            <ModalProvider>
+              <CrmProvider>
+                <ImportProvider>
+                  <AppContextCombiner>
+                    {children}
+                  </AppContextCombiner>
+                </ImportProvider>
+              </CrmProvider>
+            </ModalProvider>
+          </ActivityProvider>
+        </LeadsProvider>
+      </OrganizationProvider>
     </AuthProvider>
   );
 }

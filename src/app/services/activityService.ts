@@ -4,6 +4,7 @@ import type { ActivityFilter, ActivityType, LeadActivity } from '../types/activi
 interface LeadActivityRow {
   id: string;
   user_id: string;
+  organization_id: string;
   lead_id: string;
   activity_type: ActivityType;
   created_at: string;
@@ -28,11 +29,11 @@ function applyFilter(query: any, filter: ActivityFilter) {
   return query;
 }
 
-export async function fetchRecentActivities(userId: string, limit = 50) {
+export async function fetchRecentActivities(organizationId: string, limit = 50) {
   const { data, error } = await supabase
     .from('lead_activities')
     .select('*')
-    .eq('user_id', userId)
+    .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -41,11 +42,11 @@ export async function fetchRecentActivities(userId: string, limit = 50) {
   return ((data as LeadActivityRow[] | null) ?? []).map(mapRowToLeadActivity);
 }
 
-export async function fetchLeadActivities(userId: string, leadId: string, filter: ActivityFilter = 'all', limit = 100) {
+export async function fetchLeadActivities(organizationId: string, leadId: string, filter: ActivityFilter = 'all', limit = 100) {
   let query = supabase
     .from('lead_activities')
     .select('*')
-    .eq('user_id', userId)
+    .eq('organization_id', organizationId)
     .eq('lead_id', leadId);
 
   query = applyFilter(query, filter);
@@ -57,11 +58,12 @@ export async function fetchLeadActivities(userId: string, leadId: string, filter
   return ((data as LeadActivityRow[] | null) ?? []).map(mapRowToLeadActivity);
 }
 
-export async function insertLeadActivity(userId: string, leadId: string, activityType: ActivityType, metadata: Record<string, unknown> = {}) {
+export async function insertLeadActivity(userId: string, organizationId: string, leadId: string, activityType: ActivityType, metadata: Record<string, unknown> = {}) {
   const { data, error } = await supabase
     .from('lead_activities')
     .insert({
       user_id: userId,
+      organization_id: organizationId,
       lead_id: leadId,
       activity_type: activityType,
       metadata,

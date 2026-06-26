@@ -12,6 +12,7 @@ Deno.serve(async (req) => {
     const { error } = await supabase.from('crm_oauth_states').insert({
       state,
       user_id: user.id,
+      organization_id: body.organizationId,
       provider: 'hubspot',
       redirect_to: body.redirectTo ?? null,
       expires_at: expiresAt,

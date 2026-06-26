@@ -76,6 +76,14 @@ export function SettingsMenu() {
               Account Settings
             </button>
 
+            <a
+              href="/dashboard/settings/team"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--input-bg)]"
+            >
+              <Webhook className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+              Team Settings
+            </a>
+
             <button
               type="button"
               onClick={() => { setPanel('upgrade'); setOpen(false); }}

@@ -96,7 +96,7 @@ export function formBody(values: Record<string, string | number | boolean | null
 }
 
 export async function upsertBillingProfile(input: {
-  userId: string;
+  organizationId: string;
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   plan: BillingPlan | 'free';
@@ -112,28 +112,28 @@ export async function upsertBillingProfile(input: {
   const { error } = await supabase
     .from('billing_profiles')
     .upsert({
-      user_id: input.userId,
+      organization_id: input.organizationId,
       stripe_customer_id: input.stripeCustomerId ?? null,
       stripe_subscription_id: input.stripeSubscriptionId ?? null,
       plan: input.plan,
       status: input.status,
       price_id: input.priceId ?? null,
       current_period_end: currentPeriodEnd,
-    }, { onConflict: 'user_id' });
+    }, { onConflict: 'organization_id' });
 
   if (error) throw error;
 }
 
-export async function findUserIdForStripeCustomer(stripeCustomerId: string) {
+export async function findOrganizationIdForStripeCustomer(stripeCustomerId: string) {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from('billing_profiles')
-    .select('user_id')
+    .select('organization_id')
     .eq('stripe_customer_id', stripeCustomerId)
     .maybeSingle();
 
   if (error) throw error;
-  return data?.user_id as string | undefined;
+  return data?.organization_id as string | undefined;
 }
 
 function hexToBytes(hex: string) {

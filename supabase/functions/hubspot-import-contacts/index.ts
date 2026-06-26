@@ -19,9 +19,17 @@ Deno.serve(async (req) => {
   const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [] as string[] };
 
   try {
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const organizationId = body.organizationId;
+    if (!organizationId) throw new Error('Missing organizationId');
+
     const { supabase, user } = await getAuthenticatedUser(req);
-    const connection = await getActiveConnection(user.id);
-    const syncRun = await createSyncRun(user.id, connection.id, 'import');
+
+    const { data: member } = await supabase.from('organization_members').select('id').eq('organization_id', organizationId).eq('user_id', user.id).maybeSingle();
+    if (!member) throw new Error('Unauthorized for this organization.');
+
+    const connection = await getActiveConnection(organizationId);
+    const syncRun = await createSyncRun(user.id, organizationId, connection.id, 'import');
     runId = syncRun.id;
 
     const accessToken = await refreshHubSpotToken(connection.id);
@@ -34,12 +42,12 @@ Deno.serve(async (req) => {
         const { data: existingLink } = await supabase
           .from('crm_contact_links')
           .select('*, leads(*)')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .eq('provider', 'hubspot')
           .eq('external_contact_id', contact.id)
           .maybeSingle();
 
-        const payload = hubspotContactToLeadPayload(contact, user.id);
+        const payload = hubspotContactToLeadPayload(contact, organizationId, user.id);
 
         if (existingLink?.lead_id) {
           const localUpdatedAt = existingLink.leads?.local_updated_at ? new Date(existingLink.leads.local_updated_at).getTime() : 0;
@@ -54,7 +62,7 @@ Deno.serve(async (req) => {
             .from('leads')
             .update(payload)
             .eq('id', existingLink.lead_id)
-            .eq('user_id', user.id);
+            .eq('organization_id', organizationId);
           if (error) throw error;
 
           await supabase
@@ -68,7 +76,7 @@ Deno.serve(async (req) => {
 
         const email = contact.properties?.email;
         const { data: matchingLead } = email
-          ? await supabase.from('leads').select('*').eq('user_id', user.id).eq('email', email).maybeSingle()
+          ? await supabase.from('leads').select('*').eq('organization_id', organizationId).eq('email', email).maybeSingle()
           : { data: null };
 
         const leadId = matchingLead?.id;
@@ -77,13 +85,14 @@ Deno.serve(async (req) => {
             .from('leads')
             .update(payload)
             .eq('id', leadId)
-            .eq('user_id', user.id);
+            .eq('organization_id', organizationId);
           result.updated += 1;
         } else {
           const { data: createdLead, error } = await supabase.from('leads').insert(payload).select('*').single();
           if (error) throw error;
           result.created += 1;
           await supabase.from('crm_contact_links').insert({
+            organization_id: organizationId,
             user_id: user.id,
             lead_id: createdLead.id,
             provider: 'hubspot',
@@ -95,6 +104,7 @@ Deno.serve(async (req) => {
         }
 
         await supabase.from('crm_contact_links').upsert({
+          organization_id: organizationId,
           user_id: user.id,
           lead_id: leadId,
           provider: 'hubspot',
@@ -102,7 +112,7 @@ Deno.serve(async (req) => {
           remote_updated_at: remoteUpdatedAt,
           last_synced_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,provider,external_contact_id' });
+        }, { onConflict: 'organization_id,provider,external_contact_id' });
       } catch (error) {
         result.failed += 1;
         result.errors.push(error instanceof Error ? error.message : 'Failed to import contact.');

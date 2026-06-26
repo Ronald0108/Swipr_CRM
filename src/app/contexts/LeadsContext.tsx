@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Lead } from '../data/leads';
 import { useAuth } from './AuthContext';
+import { useOrganization } from './OrganizationContext';
 import {
   FetchLeadsMode,
   LeadEditValue,
@@ -69,6 +70,7 @@ export function useLeads() {
 
 export function LeadsProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
+  const { activeOrganization } = useOrganization();
   const router = useRouter();
   
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -92,10 +94,10 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   const isDone = !leadsLoading && leads.length > 0 && currentIndex >= leads.length;
 
   const fetchLeads = useCallback(async (mode: FetchLeadsMode = 'preserve') => {
-    if (!session) { setLeads([]); setCurrentIndex(0); setLeadsLoading(false); return; }
+    if (!session || !activeOrganization) { setLeads([]); setCurrentIndex(0); setLeadsLoading(false); return; }
     setLeadsLoading(true);
     try {
-      const { data, error } = await supabase.from('leads').select('*').eq('user_id', session.user.id);
+      const { data, error } = await supabase.from('leads').select('*').eq('organization_id', activeOrganization.id);
       if (error) { console.error('Error fetching leads:', error); return; }
       const normalizedLeads = (data || []).map((lead) => normalizeLeadRow(lead));
       const nextLeads = normalizedLeads as Lead[];
@@ -104,14 +106,14 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       setLeads(nextLeads);
       setCurrentIndex(nextIndex);
     } finally { setLeadsLoading(false); }
-  }, [session]);
+  }, [session, activeOrganization]);
 
   const persistLeadEdit = useCallback(async (leadId: string, field: keyof Lead, value: LeadEditValue) => {
-    if (!session) return;
+    if (!session || !activeOrganization) return;
     if (field === 'id') { console.error('Refusing to edit immutable lead id.'); return; }
-    const { error } = await supabase.from('leads').update({ [getLeadDatabaseColumn(field)]: value }).eq('id', leadId).eq('user_id', session.user.id);
+    const { error } = await supabase.from('leads').update({ [getLeadDatabaseColumn(field)]: value }).eq('id', leadId).eq('organization_id', activeOrganization.id);
     if (error) { console.error('Error saving lead edit:', error); await fetchLeads(); }
-  }, [fetchLeads, session]);
+  }, [fetchLeads, session, activeOrganization]);
 
   const handleLeadEdit = useCallback((leadId: string, field: keyof Lead, value: LeadEditValue) => {
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, [field]: value } : l));
@@ -119,10 +121,12 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   }, [persistLeadEdit]);
 
   const handleCreateLead = useCallback(async () => {
-    if (!session || creatingLead) return;
+    if (!session || !activeOrganization || creatingLead) return;
     setCreatingLead(true);
     try {
-      const { data, error } = await supabase.from('leads').insert(buildBlankLeadPayload(session.user.id)).select('*').single();
+      const payload = buildBlankLeadPayload(session.user.id);
+      (payload as any).organization_id = activeOrganization.id;
+      const { data, error } = await supabase.from('leads').insert(payload).select('*').single();
       if (error) { console.error('Error creating lead:', error); return; }
       const newLead = normalizeLeadRow(data as Record<string, unknown>);
       setLeads((prev) => [...prev, newLead]);
@@ -132,14 +136,14 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       setAutoEditLeadId(newLead.id);
       setAutoEditLeadToken((token) => token + 1);
     } finally { setCreatingLead(false); }
-  }, [creatingLead, leads.length, session]);
+  }, [creatingLead, leads.length, session, activeOrganization]);
 
   const handleDeleteCurrentLead = useCallback(async () => {
-    if (!session || !currentLead) return;
+    if (!session || !activeOrganization || !currentLead) return;
     const leadToDelete = currentLead;
     setDeletingLead(true);
     try {
-      const { error } = await supabase.from('leads').delete().eq('id', leadToDelete.id).eq('user_id', session.user.id);
+      const { error } = await supabase.from('leads').delete().eq('id', leadToDelete.id).eq('organization_id', activeOrganization.id);
       if (error) { console.error('Error deleting lead:', error); return; }
       setLeads((prev) => {
         const nextLeads = prev.filter((lead) => lead.id !== leadToDelete.id);
@@ -151,7 +155,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
         return nextLeads;
       });
     } finally { setDeletingLead(false); }
-  }, [currentIndex, currentLead, session]);
+  }, [currentIndex, currentLead, session, activeOrganization]);
 
   const findLeadSearchIndex = useCallback((query: string, startIndex: number, direction: 1 | -1) => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -237,9 +241,9 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   }, [currentIndex, leads.length]);
 
   useEffect(() => {
-    if (session) { fetchLeads(); }
+    if (session && activeOrganization) { fetchLeads(); }
     else { setLeads([]); setCurrentIndex(0); setLeadsLoading(false); currentLeadIdRef.current = null; }
-  }, [fetchLeads, session]);
+  }, [fetchLeads, session, activeOrganization]);
 
   const openLeadHistory = useCallback((leadId: string) => {
     if (!session) return;

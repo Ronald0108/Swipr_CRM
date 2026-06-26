@@ -185,12 +185,12 @@ export async function refreshHubSpotToken(connectionId: string) {
   return refreshed.access_token as string;
 }
 
-export async function getActiveConnection(userId: string) {
+export async function getActiveConnection(organizationId: string) {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from('crm_connections')
     .select('*')
-    .eq('user_id', userId)
+    .eq('organization_id', organizationId)
     .eq('provider', 'hubspot')
     .neq('status', 'disconnected')
     .maybeSingle();
@@ -235,12 +235,13 @@ function normalizeSwiprStatus(status: string | null | undefined) {
   return 'new';
 }
 
-export function hubspotContactToLeadPayload(contact: HubSpotContact, userId: string) {
+export function hubspotContactToLeadPayload(contact: HubSpotContact, organizationId: string, userId: string) {
   const properties = contact.properties ?? {};
   const name = [properties.firstname, properties.lastname].filter(Boolean).join(' ').trim();
   const remoteUpdatedAt = contact.updatedAt ?? properties.lastmodifieddate ?? null;
 
   return {
+    organization_id: organizationId,
     user_id: userId,
     name,
     title: properties.jobtitle ?? '',
@@ -318,11 +319,11 @@ export async function fetchAllHubSpotContacts(accessToken: string, availableProp
   return contacts;
 }
 
-export async function createSyncRun(userId: string, connectionId: string, operation: 'import' | 'export' | 'sync') {
+export async function createSyncRun(userId: string, organizationId: string, connectionId: string, operation: 'import' | 'export' | 'sync') {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from('crm_sync_runs')
-    .insert({ user_id: userId, connection_id: connectionId, provider: 'hubspot', operation })
+    .insert({ user_id: userId, organization_id: organizationId, connection_id: connectionId, provider: 'hubspot', operation })
     .select('*')
     .single();
 

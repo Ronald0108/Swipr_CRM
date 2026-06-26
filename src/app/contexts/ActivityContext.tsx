@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Lead } from '../data/leads';
 import { useAuth } from './AuthContext';
+import { useOrganization } from './OrganizationContext';
 import { useLeads } from './LeadsContext';
 import { ActivityType, ActivityFilter, LeadActivity } from '../types/activity';
 import {
@@ -48,6 +49,7 @@ export function useActivity() {
 
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
+  const { activeOrganization } = useOrganization();
   const { leads, leadsLoading } = useLeads();
 
   const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
@@ -75,13 +77,13 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   }, [activityLog]);
 
   const refreshLeadActivities = useCallback(async (leadId: string, filter: ActivityFilter) => {
-    if (!session) { setLeadActivityItems(getLocalLeadActivityItems(leadId)); return; }
+    if (!session || !activeOrganization) { setLeadActivityItems(getLocalLeadActivityItems(leadId)); return; }
     try {
-      const activities = await fetchLeadActivities(session.user.id, leadId, filter, 200);
+      const activities = await fetchLeadActivities(activeOrganization.id, leadId, filter, 200);
       if (activities.length === 0) { setLeadActivityItems(getLocalLeadActivityItems(leadId)); return; }
       setLeadActivityItems(mapActivitiesToItems(activities, leads));
     } catch (error) { console.error('Error fetching lead activities:', error); setLeadActivityItems(getLocalLeadActivityItems(leadId)); }
-  }, [getLocalLeadActivityItems, leads, mapActivitiesToItems, session]);
+  }, [getLocalLeadActivityItems, leads, mapActivitiesToItems, session, activeOrganization]);
 
   const addActivity = useCallback(async (action: ActivityType, lead: Lead, metadata: Record<string, unknown> = {}) => {
     const isStatusAction = STATUS_ACTIONS.includes(action);
@@ -103,12 +105,12 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
         return [updatedItem, ...next];
       });
 
-      if (!session) return;
+      if (!session || !activeOrganization) return;
       try {
         if (existingItem.id && !existingItem.id.includes('-0.')) {
           await deleteLeadActivity(existingItem.id);
         }
-        const newDbItem = await insertLeadActivity(session.user.id, lead.id, action, metadata);
+        const newDbItem = await insertLeadActivity(session.user.id, activeOrganization.id, lead.id, action, metadata);
         setActivityLog(prev => prev.map(item => item.id === existingItem.id ? { ...item, id: newDbItem.id } : item));
       } catch (error) {
         console.error('Error updating status activity:', error);
@@ -120,14 +122,14 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
         leadName: lead.name, company: lead.company, timestamp: new Date(),
       };
       setActivityLog((prev) => [nextItem, ...prev].slice(0, 80));
-      if (!session) return;
+      if (!session || !activeOrganization) return;
       try {
-        await insertLeadActivity(session.user.id, lead.id, action, metadata);
+        await insertLeadActivity(session.user.id, activeOrganization.id, lead.id, action, metadata);
       } catch (error) {
         console.error('Error adding activity:', error);
       }
     }
-  }, [activityLog, session]);
+  }, [activityLog, session, activeOrganization]);
 
   const getLeadStatusLabel = useCallback((lead: Lead) => {
     const latestStatus = activityLog.find((item) => item.leadId === lead.id && STATUS_ACTIONS.includes(item.action));
@@ -135,13 +137,13 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   }, [activityLog]);
 
   useEffect(() => {
-    if (!session) {
+    if (!session || !activeOrganization) {
       setActivityLog([]);
       setStatsCount({ connected: 0, lost: 0, voicemail: 0, next: 0 });
       return;
     }
     if (!leadsLoading && leads.length > 0) {
-      fetchRecentActivities(session.user.id, 80)
+      fetchRecentActivities(activeOrganization.id, 80)
         .then(recentActivities => {
           setActivityLog(mapActivitiesToItems(recentActivities, leads));
         })
@@ -150,7 +152,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
         });
     }
     if (!leadsLoading && leads.length === 0) setActivityLog([]);
-  }, [leadsLoading, leads, session, mapActivitiesToItems]);
+  }, [leadsLoading, leads, session, activeOrganization, mapActivitiesToItems]);
 
   useEffect(() => {
     const seenLeads = new Set<string>();

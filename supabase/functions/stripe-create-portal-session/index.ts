@@ -16,10 +16,15 @@ Deno.serve(async (req) => {
 
   try {
     const { supabase, user } = await getAuthenticatedUser(req);
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const organizationId = body.organizationId;
+    
+    if (!organizationId) throw new Error('Missing organizationId');
+
     const { data: profile, error } = await supabase
       .from('billing_profiles')
       .select('stripe_customer_id')
-      .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
       .maybeSingle();
 
     if (error) throw error;

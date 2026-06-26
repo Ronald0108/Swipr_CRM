@@ -1,6 +1,6 @@
 import type { BillingPlan, BillingStatus } from '../_shared/stripe.ts';
 import {
-  findUserIdForStripeCustomer,
+  findOrganizationIdForStripeCustomer,
   getPlanForPriceId,
   jsonResponse,
   optionsResponse,
@@ -21,7 +21,7 @@ type StripeCheckoutSession = {
   customer?: string | null;
   subscription?: string | null;
   metadata?: {
-    user_id?: string;
+    organization_id?: string;
     plan?: BillingPlan;
   } | null;
 };
@@ -32,7 +32,7 @@ type StripeSubscription = {
   status: BillingStatus;
   current_period_end?: number | null;
   metadata?: {
-    user_id?: string;
+    organization_id?: string;
     plan?: BillingPlan;
   } | null;
   items?: {
@@ -53,19 +53,19 @@ async function getSubscription(subscriptionId: string) {
   return await stripeRequest<StripeSubscription>(`/subscriptions/${subscriptionId}`);
 }
 
-async function syncSubscription(subscription: StripeSubscription, fallbackUserId?: string | null) {
+async function syncSubscription(subscription: StripeSubscription, fallbackOrganizationId?: string | null) {
   const stripeCustomerId = subscription.customer;
-  const userId = subscription.metadata?.user_id
-    ?? fallbackUserId
-    ?? await findUserIdForStripeCustomer(stripeCustomerId);
+  const organizationId = subscription.metadata?.organization_id
+    ?? fallbackOrganizationId
+    ?? await findOrganizationIdForStripeCustomer(stripeCustomerId);
 
-  if (!userId) throw new Error('No user found for Stripe subscription.');
+  if (!organizationId) throw new Error('No organization found for Stripe subscription.');
 
   const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
   const plan = subscription.metadata?.plan ?? getPlanForPriceId(priceId);
 
   await upsertBillingProfile({
-    userId,
+    organizationId,
     stripeCustomerId,
     stripeSubscriptionId: subscription.id,
     plan,
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       const session = event.data.object as StripeCheckoutSession;
       if (session.subscription) {
         const subscription = await getSubscription(session.subscription);
-        await syncSubscription(subscription, session.client_reference_id ?? session.metadata?.user_id ?? null);
+        await syncSubscription(subscription, session.client_reference_id ?? session.metadata?.organization_id ?? null);
       }
     }
 
