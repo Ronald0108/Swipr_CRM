@@ -15,6 +15,39 @@
   --sw-shadow: 0 30px 90px rgba(0, 0, 0, 0.32);
 }
 
+.swipr-dashboard {
+  --dash-bg: #f6f3ed;
+  --dash-topbar: rgba(255, 252, 246, 0.82);
+  --dash-sidebar: rgba(250, 247, 240, 0.92);
+  --dash-panel: rgba(255, 255, 255, 0.88);
+  --dash-elevated: #ffffff;
+  --dash-border: rgba(50, 44, 36, 0.13);
+  --dash-text: #1e1b16;
+  --dash-subtle: #5f574d;
+  --dash-muted: #857b6d;
+  --dash-progress-track: rgba(35, 31, 26, 0.12);
+  background:
+    radial-gradient(900px 460px at 55% -12%, rgba(79, 70, 229, 0.14), transparent 62%),
+    radial-gradient(760px 380px at 96% 10%, rgba(214, 182, 118, 0.2), transparent 64%),
+    linear-gradient(135deg, #faf7ef 0%, #f2eee5 48%, #ebe5d9 100%);
+  color: var(--dash-text);
+}
+
+.dark .swipr-dashboard {
+  --dash-bg: #0a0a0f;
+  --dash-topbar: #0a0a0f;
+  --dash-sidebar: #0e0e17;
+  --dash-panel: rgba(14, 14, 23, 0.95);
+  --dash-elevated: #13131a;
+  --dash-border: #1c1c2a;
+  --dash-text: #ffffff;
+  --dash-subtle: #9ca3af;
+  --dash-muted: #6b7280;
+  --dash-progress-track: #1f2937;
+  background: #0a0a0f;
+  color: var(--dash-text);
+}
+
 .swipr-workspace {
   background:
     radial-gradient(1100px 520px at 55% -10%, rgba(214, 182, 118, 0.16), transparent 58%),

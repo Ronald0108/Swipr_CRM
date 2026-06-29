@@ -54,6 +54,39 @@ interface CrmContextType {
 
 const CrmContext = createContext<CrmContextType | null>(null);
 
+type CrmFunctionResponse = {
+  authUrl?: string;
+  result?: CrmSyncResult;
+  error?: string;
+};
+
+async function invokeCrmFunction<T extends CrmFunctionResponse>(
+  functionName: string,
+  accessToken: string,
+  body: Record<string, unknown> = {},
+): Promise<T> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY;
+  if (!supabaseUrl || !supabaseKey) throw new Error('Missing Supabase client configuration.');
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      apikey: supabaseKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await response.json().catch(() => ({})) as T;
+  if (!response.ok) {
+    throw new Error(data.error ?? `${functionName} failed with status ${response.status}.`);
+  }
+
+  return data;
+}
+
 export function useCrm() {
   const ctx = useContext(CrmContext);
   if (!ctx) throw new Error('useCrm must be used within CrmProvider');
@@ -100,9 +133,12 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
     if (!session) return;
     setCrmAction('connect'); setCrmError('');
     try {
-      const { data, error } = await supabase.functions.invoke('hubspot-oauth-start', { body: { redirectTo: window.location.origin } });
-      if (error) throw error;
+      const data = await invokeCrmFunction('hubspot-oauth-start', session.access_token, { redirectTo: window.location.origin });
       if (!data?.authUrl) throw new Error('HubSpot OAuth URL was not returned.');
+      const authUrl = new URL(data.authUrl);
+      if (!authUrl.searchParams.get('client_id') || !authUrl.searchParams.get('redirect_uri')) {
+        throw new Error('HubSpot OAuth URL is missing client_id or redirect_uri. Check Supabase function secrets.');
+      }
       window.location.href = data.authUrl;
     } catch (error) { setCrmError(error instanceof Error ? error.message : 'Failed to connect HubSpot.'); }
     finally { setCrmAction(null); }
@@ -112,14 +148,14 @@ export function CrmProvider({ children }: { children: React.ReactNode }) {
     const functionName = { import: 'hubspot-import-contacts', export: 'hubspot-export-contacts', sync: 'hubspot-sync-contacts', disconnect: 'hubspot-disconnect' }[action];
     setCrmAction(action); setCrmError(''); setCrmResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke(functionName, { body: {} });
-      if (error) throw error;
+      if (!session) throw new Error('You must be logged in to use HubSpot sync.');
+      const data = await invokeCrmFunction(functionName, session.access_token);
       setCrmResult((data?.result as CrmSyncResult | undefined) ?? null);
       await loadCrmStatus();
       if (action !== 'disconnect') { await fetchLeads(); } else { setCrmConnection(null); }
     } catch (error) { setCrmError(error instanceof Error ? error.message : `HubSpot ${action} failed.`); }
     finally { setCrmAction(null); }
-  }, [fetchLeads, loadCrmStatus]);
+  }, [fetchLeads, loadCrmStatus, session]);
 
   useEffect(() => {
     if (session) { void loadCrmStatus(); }

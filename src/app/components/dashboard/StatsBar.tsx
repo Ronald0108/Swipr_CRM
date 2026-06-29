@@ -17,7 +17,7 @@ export function StatsBar() {
   const currentLeadPosition = total > 0 ? Math.min(currentIndex + 1, total) : 0;
 
   return (
-    <header className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: '#1c1c2a' }}>
+    <header className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: 'var(--dash-border)', background: 'var(--dash-topbar)' }}>
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center">
           <img src="/images/logo_transparent.png" alt="Swipr CRM logo" className="w-full h-full object-cover" />
@@ -25,8 +25,8 @@ export function StatsBar() {
       </div>
       <div className="flex items-center gap-3">
         <div className="hidden sm:flex flex-col items-end gap-0.5">
-          <span className="text-white text-sm font-semibold">Lead {currentLeadPosition} of {total}</span>
-          <div className="w-32 h-1.5 rounded-full bg-gray-800 overflow-hidden">
+          <span className="text-sm font-semibold" style={{ color: 'var(--dash-text)' }}>Lead {currentLeadPosition} of {total}</span>
+          <div className="w-32 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--dash-progress-track)' }}>
             <motion.div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
           </div>
         </div>

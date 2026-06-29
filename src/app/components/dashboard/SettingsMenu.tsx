@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Crown, LogOut, Settings, User } from 'lucide-react';
 import { useApp } from '@/app/providers';
+import { ThemeToggle } from '../ThemeToggle';
 
 type SettingsPanel = 'account' | 'upgrade' | null;
 
@@ -48,6 +49,10 @@ export function SettingsMenu() {
               <Crown className="h-4 w-4 text-amber-300" />
               Upgrade account
             </button>
+            <div className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-gray-200">
+              <span>Theme</span>
+              <ThemeToggle />
+            </div>
             <div className="my-1 h-px bg-[#252538]" />
             <button
               type="button"

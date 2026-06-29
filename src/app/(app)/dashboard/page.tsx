@@ -112,10 +112,10 @@ export default function HomePage() {
   // ── Auth loading ──
   if (authLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#0a0a0f]">
+      <div className="swipr-dashboard h-screen w-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white text-lg font-semibold">Loading Swipr CRM...</p>
-          <p className="text-gray-500 text-sm mt-2">Checking your session</p>
+          <p className="text-lg font-semibold" style={{ color: 'var(--dash-text)' }}>Loading Swipr CRM...</p>
+          <p className="text-sm mt-2" style={{ color: 'var(--dash-muted)' }}>Checking your session</p>
         </div>
       </div>
     );
@@ -161,9 +161,9 @@ export default function HomePage() {
   // ── Leads loading ──
   if (leadsLoading && leads.length === 0) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#0a0a0f]">
+      <div className="swipr-dashboard h-screen w-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white text-lg font-semibold">Loading SwiprCRM...</p>
+          <p className="text-lg font-semibold" style={{ color: 'var(--dash-text)' }}>Loading SwiprCRM...</p>
         </div>
       </div>
     );
@@ -172,8 +172,8 @@ export default function HomePage() {
   // ── Empty state ──
   if (leads.length === 0) {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#0a0a0f]">
-        <header className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b border-[#1c1c2a]">
+      <div className="swipr-dashboard h-screen w-screen overflow-hidden flex flex-col">
+        <header className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: 'var(--dash-border)' }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center">
               <img src="/images/logo_transparent.png" alt="Swipr CRM logo" className="w-full h-full object-cover" />
@@ -195,8 +195,8 @@ export default function HomePage() {
         <main className="flex-1 flex items-center justify-center px-6 text-center">
           <div>
             <Users className="w-10 h-10 text-gray-700 mx-auto mb-4" />
-            <p className="text-white text-lg font-semibold">No leads loaded</p>
-            <p className="text-gray-500 text-sm mt-2">Add a lead manually or import a CSV to start reviewing leads.</p>
+            <p className="text-lg font-semibold" style={{ color: 'var(--dash-text)' }}>No leads loaded</p>
+            <p className="text-sm mt-2" style={{ color: 'var(--dash-muted)' }}>Add a lead manually or import a CSV to start reviewing leads.</p>
             <button onClick={() => void handleCreateLead()} disabled={creatingLead} className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60 bg-[#4f46e5]">
               <Plus className="w-4 h-4" />{creatingLead ? 'Adding...' : 'Add Lead'}
             </button>
@@ -214,7 +214,7 @@ export default function HomePage() {
 
   // ── Main rolodex view ──
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#0a0a0f]">
+    <div className="swipr-dashboard h-screen w-screen overflow-hidden flex flex-col">
       {/* ── TOP BAR ── */}
       <StatsBar />
 
@@ -236,8 +236,8 @@ export default function HomePage() {
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto mb-5">
                 <Award className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-white mb-2">All Leads Reviewed!</h2>
-              <p className="text-gray-400 text-sm mb-6">{statsCount.connected} connected · {statsCount.voicemail} voicemails · {statsCount.lost} lost</p>
+              <h2 className="mb-2" style={{ color: 'var(--dash-text)' }}>All Leads Reviewed!</h2>
+              <p className="text-sm mb-6" style={{ color: 'var(--dash-muted)' }}>{statsCount.connected} connected · {statsCount.voicemail} voicemails · {statsCount.lost} lost</p>
               <button onClick={() => { setCurrentIndex(0); currentLeadIdRef.current = leads[0]?.id ?? null; void fetchLeads('reset'); setStatsCount({ connected: 0, lost: 0, voicemail: 0, next: 0 }); setActivityLog([]); }}
                 className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors">Back to First Lead</button>
             </motion.div>
@@ -270,17 +270,17 @@ export default function HomePage() {
 
       <CallNoticeToast notice={callNotice} />
 
-      <div className="fixed bottom-20 right-5 z-40 grid grid-cols-2 gap-1.5 rounded-xl border border-[#1c1c2a] bg-[#0e0e17]/95 p-1.5 shadow-2xl" style={{ backdropFilter: 'blur(14px)' }}>
+      <div className="fixed bottom-20 right-5 z-40 grid grid-cols-2 gap-1.5 rounded-xl border p-1.5 shadow-2xl" style={{ backdropFilter: 'blur(14px)', background: 'var(--dash-panel)', borderColor: 'var(--dash-border)' }}>
         {([
           { icon: CheckCircle, count: statsCount.connected, color: 'text-emerald-400', label: 'Connected' },
           { icon: XCircle, count: statsCount.lost, color: 'text-rose-400', label: 'Lost' },
           { icon: Voicemail, count: statsCount.voicemail, color: 'text-amber-400', label: 'Voicemail' },
           { icon: SkipForward, count: statsCount.next, color: 'text-sky-400', label: 'Skipped' },
         ] as const).map(({ icon: Icon, count, color, label }) => (
-          <div key={label} className="flex items-center gap-1.5 rounded-lg bg-[#13131a] px-2 py-1.5">
+          <div key={label} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5" style={{ background: 'var(--dash-elevated)' }}>
             <Icon className={`h-3.5 w-3.5 ${color}`} />
-            <span className="text-xs font-semibold text-white">{count}</span>
-            <span className="hidden text-[10px] text-gray-500 sm:inline">{label}</span>
+            <span className="text-xs font-semibold" style={{ color: 'var(--dash-text)' }}>{count}</span>
+            <span className="hidden text-[10px] sm:inline" style={{ color: 'var(--dash-muted)' }}>{label}</span>
           </div>
         ))}
       </div>
@@ -298,6 +298,8 @@ export default function HomePage() {
       <AnimatePresence>
         <DeleteConfirmDialog />
       </AnimatePresence>
+      <ImportModal />
+      <CrmModal />
     </div>
   );
 }

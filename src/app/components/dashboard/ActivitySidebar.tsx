@@ -16,25 +16,25 @@ export function ActivitySidebar({ collapsed }: ActivitySidebarProps) {
       animate={{ width: collapsed ? 0 : 288 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
       className="flex-shrink-0 flex flex-col border-r overflow-hidden"
-      style={{ background: '#0e0e17', borderColor: '#1c1c2a' }}
+      style={{ background: 'var(--dash-sidebar)', borderColor: 'var(--dash-border)' }}
       aria-hidden={collapsed}
     >
       <div className="w-72 flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: '#1c1c2a' }}>
+        <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: 'var(--dash-border)' }}>
           <div className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-indigo-400" />
-            <span className="text-white text-sm font-semibold">Activity Log</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--dash-text)' }}>Activity Log</span>
           </div>
-          <span className="text-gray-600 text-xs">{activityLog.length} actions</span>
+          <span className="text-xs" style={{ color: 'var(--dash-muted)' }}>{activityLog.length} actions</span>
         </div>
         {!isDone && currentLead && (
-          <div className="px-4 py-3 border-b mx-3 mt-3 rounded-xl" style={{ background: '#13131a', border: '1px solid #1f1f2e' }}>
-            <p className="text-gray-500 text-xs uppercase tracking-wider mb-1.5">Current Lead</p>
-            <p className="text-white font-semibold text-sm truncate">{currentLead.name}</p>
-            <p className="text-gray-400 text-xs truncate">{currentLead.company}</p>
+          <div className="px-4 py-3 border-b mx-3 mt-3 rounded-xl" style={{ background: 'var(--dash-elevated)', border: '1px solid var(--dash-border)' }}>
+            <p className="text-xs uppercase tracking-wider mb-1.5" style={{ color: 'var(--dash-muted)' }}>Current Lead</p>
+            <p className="font-semibold text-sm truncate" style={{ color: 'var(--dash-text)' }}>{currentLead.name}</p>
+            <p className="text-xs truncate" style={{ color: 'var(--dash-subtle)' }}>{currentLead.company}</p>
             <div className="flex items-center justify-between mt-2">
               <span className="text-indigo-400 text-xs font-semibold">{currentLead.industry}</span>
-              <span className="text-gray-500 text-xs">Score: {currentLead.score ?? 0}</span>
+              <span className="text-xs" style={{ color: 'var(--dash-muted)' }}>Score: {currentLead.score ?? 0}</span>
             </div>
             <button onClick={() => openLeadHistory(currentLead.id)} className="mt-2 w-full rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-2 py-1.5 text-xs font-semibold text-indigo-300 transition-colors hover:bg-indigo-500/20">View History</button>
           </div>

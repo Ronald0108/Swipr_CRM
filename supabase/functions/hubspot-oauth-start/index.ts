@@ -18,9 +18,14 @@ Deno.serve(async (req) => {
     });
     if (error) throw error;
 
+    const clientId = requireEnv('HUBSPOT_CLIENT_ID').trim();
+    const redirectUri = getHubSpotRedirectUri().trim();
+    if (!clientId) throw new Error('Missing HUBSPOT_CLIENT_ID.');
+    if (!redirectUri) throw new Error('Missing HUBSPOT_REDIRECT_URI.');
+
     const params = new URLSearchParams({
-      client_id: requireEnv('HUBSPOT_CLIENT_ID'),
-      redirect_uri: getHubSpotRedirectUri(),
+      client_id: clientId,
+      redirect_uri: redirectUri,
       scope: getHubSpotScopes().join(' '),
       state,
     });

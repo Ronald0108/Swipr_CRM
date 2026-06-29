@@ -33,7 +33,7 @@ export function KeyboardLegend() {
   } = useApp();
 
   return (
-    <footer className="flex-shrink-0 px-6 py-3 border-t flex items-center justify-center gap-2 flex-wrap" style={{ borderColor: '#1c1c2a', background: '#0a0a0f' }}>
+    <footer className="flex-shrink-0 px-6 py-3 border-t flex items-center justify-center gap-2 flex-wrap" style={{ borderColor: 'var(--dash-border)', background: 'var(--dash-topbar)' }}>
       {SHORTCUT_KEYS.map(({ key, label, action, color, bg }) => {
         const isPressed = pressedKey === key;
         return (
