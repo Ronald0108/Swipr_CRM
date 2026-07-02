@@ -1,16 +1,21 @@
 {
-  "uid": "get_started_app",
+  "uid": "swiprcrm_app",
   "type": "app",
   "config": {
-    "description": "A basic static token app for testing",
-    "name": "My Get Started app",
+    "description": "An example to demonstrate how to build a private oauth app with developer projects.",
+    "name": "swiprcrm-App",
     "distribution": "private",
     "auth": {
-      "type": "static",
+      "type": "oauth",
+      "redirectUrls": [
+        "http://localhost:3000/api/auth/callback/hubspot",
+        "https://swipr-crm.vercel.app/api/auth/callback/hubspot"
+      ],
       "requiredScopes": [
         "oauth",
         "crm.objects.contacts.read",
-        "crm.objects.contacts.write"
+        "crm.objects.contacts.write",
+        "crm.objects.notes.write"
       ],
       "optionalScopes": [],
       "conditionallyRequiredScopes": []
