@@ -128,7 +128,6 @@ export function getHubSpotScopes() {
   return [
     "crm.objects.contacts.read",
     "crm.objects.contacts.write",
-    "crm.objects.notes.write",
   ];
 }
 

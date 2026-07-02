@@ -126,7 +126,6 @@ export async function GET(request: Request) {
           scopes: [
             "crm.objects.contacts.read",
             "crm.objects.contacts.write",
-            "crm.objects.notes.write",
           ],
           connected_at: new Date().toISOString(),
           expires_at: expiresAt,
