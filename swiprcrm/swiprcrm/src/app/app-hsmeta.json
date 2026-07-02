@@ -9,7 +9,8 @@
       "type": "oauth",
       "redirectUrls": [
         "http://localhost:3000/api/auth/callback/hubspot",
-        "https://swipr-crm.vercel.app/api/auth/callback/hubspot"
+        "https://swipr-crm.vercel.app/api/auth/callback/hubspot",
+        "https://vdzugjbtuclhibunhozd.supabase.co/functions/v1/hubspot-oauth-callback"
       ],
       "requiredScopes": [
         "oauth",

@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BarChart3, Phone } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
@@ -23,7 +23,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     showNotesModal, setShowNotesModal,
     showEmailModal, setShowEmailModal,
     detailActivityFilter, setDetailActivityFilter,
-    leadActivityItems,
+    leadActivityItems, refreshLeadActivities,
     callNotice,
     promptLeadCall, promptLeadEmail,
     handleSaveNotes, handleEmailSent,
@@ -32,6 +32,13 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
 
   const detailLeadId = decodeURIComponent(id);
   const detailLead = leads.find((lead) => lead.id === detailLeadId) ?? null;
+
+  // Fetch activities from the database when lead or filter changes
+  useEffect(() => {
+    if (detailLeadId) {
+      refreshLeadActivities(detailLeadId, detailActivityFilter);
+    }
+  }, [detailLeadId, detailActivityFilter, refreshLeadActivities]);
 
   if (!detailLead) {
     return (

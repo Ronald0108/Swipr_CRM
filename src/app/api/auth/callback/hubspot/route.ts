@@ -123,10 +123,7 @@ export async function GET(request: Request) {
           portal_id: String(identity.hub_id ?? identity.hubId ?? ""),
           account_name: identity.hub_domain ?? identity.user ?? "HubSpot",
           status: "active",
-          scopes: [
-            "crm.objects.contacts.read",
-            "crm.objects.contacts.write",
-          ],
+          scopes: ["crm.objects.contacts.read", "crm.objects.contacts.write"],
           connected_at: new Date().toISOString(),
           expires_at: expiresAt,
           updated_at: new Date().toISOString(),
@@ -159,10 +156,6 @@ export async function GET(request: Request) {
         },
         { onConflict: "connection_id" },
       );
-
-    if (tokenError) throw tokenError;
-
-    await supabase.from("crm_oauth_states").delete().eq("state", state);
 
     return NextResponse.redirect(
       `${oauthState.redirect_to ?? appOrigin}?hubspot=connected`,

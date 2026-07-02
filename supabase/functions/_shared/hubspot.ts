@@ -125,10 +125,7 @@ export function getHubSpotRedirectUri() {
 }
 
 export function getHubSpotScopes() {
-  return [
-    "crm.objects.contacts.read",
-    "crm.objects.contacts.write",
-  ];
+  return ["crm.objects.contacts.read", "crm.objects.contacts.write"];
 }
 
 export async function exchangeCodeForTokens(code: string) {
