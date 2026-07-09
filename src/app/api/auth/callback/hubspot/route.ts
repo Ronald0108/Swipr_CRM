@@ -50,11 +50,19 @@ async function encryptToken(token: string) {
 
 export async function GET(request: Request) {
   const currentUrl = new URL(request.url);
-  const appOrigin = currentUrl.origin;
-  const callbackUri = `${currentUrl.origin}${currentUrl.pathname}`;
+  
+  // Robust origin resolution for Vercel/proxies
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const resolvedOrigin = host ? `${proto}://${host}` : currentUrl.origin;
+  const appOrigin = process.env.NEXT_PUBLIC_BASE_URL || resolvedOrigin;
+  
+  const callbackUri = `${appOrigin}${currentUrl.pathname}`;
   const { searchParams } = currentUrl;
   const code = searchParams.get("code");
   const state = searchParams.get("state");
+
+  let redirectTo = appOrigin;
 
   if (!code || !state) {
     return NextResponse.json(
@@ -157,8 +165,10 @@ export async function GET(request: Request) {
         { onConflict: "connection_id" },
       );
 
+    redirectTo = oauthState.redirect_to ?? appOrigin;
+
     return NextResponse.redirect(
-      `${oauthState.redirect_to ?? appOrigin}?hubspot=connected`,
+      `${redirectTo}?hubspot=connected`,
       302,
     );
   } catch (error) {
@@ -167,7 +177,7 @@ export async function GET(request: Request) {
       error instanceof Error ? error.message : "HubSpot OAuth failed.",
     );
     return NextResponse.redirect(
-      `${appOrigin}?hubspot=error&message=${message}`,
+      `${redirectTo}?hubspot=error&message=${message}`,
       302,
     );
   }
