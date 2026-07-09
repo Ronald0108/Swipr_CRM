@@ -16,8 +16,8 @@ function getSupabaseClient() {
 
 function getTokenEncryptionSecret() {
   return (
-    process.env.HUBSPOT_TOKEN_ENCRYPTION_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.HUBSPOT_TOKEN_ENCRYPTION_KEY
   );
 }
 

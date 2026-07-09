@@ -78,11 +78,11 @@ function base64ToBytes(value: string) {
 
 async function getTokenEncryptionKey() {
   const secret =
-    Deno.env.get("HUBSPOT_TOKEN_ENCRYPTION_KEY") ||
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+    Deno.env.get("HUBSPOT_TOKEN_ENCRYPTION_KEY");
   if (!secret)
     throw new Error(
-      "Missing HUBSPOT_TOKEN_ENCRYPTION_KEY or SUPABASE_SERVICE_ROLE_KEY.",
+      "Missing SUPABASE_SERVICE_ROLE_KEY or HUBSPOT_TOKEN_ENCRYPTION_KEY.",
     );
   const digest = await crypto.subtle.digest(
     "SHA-256",
