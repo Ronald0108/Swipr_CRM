@@ -50,19 +50,18 @@ async function encryptToken(token: string) {
 
 export async function GET(request: Request) {
   const currentUrl = new URL(request.url);
-  
-  // Robust origin resolution for Vercel/proxies
-  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
-  const proto = request.headers.get("x-forwarded-proto") || "https";
-  const resolvedOrigin = host ? `${proto}://${host}` : currentUrl.origin;
-  const appOrigin = process.env.NEXT_PUBLIC_BASE_URL || resolvedOrigin;
-  
-  const callbackUri = `${appOrigin}${currentUrl.pathname}`;
   const { searchParams } = currentUrl;
   const code = searchParams.get("code");
   const state = searchParams.get("state");
 
-  let redirectTo = appOrigin;
+  // Fallback origin: use forwarded headers (Vercel/proxies set these),
+  // then fall back to the request URL origin.
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const fallbackOrigin = host ? `${proto}://${host}` : currentUrl.origin;
+
+  // This will be updated to the stored redirect_to once we fetch the oauth state.
+  let redirectTo = fallbackOrigin;
 
   if (!code || !state) {
     return NextResponse.json(
@@ -74,6 +73,7 @@ export async function GET(request: Request) {
   try {
     const supabase = getSupabaseClient();
 
+    // ── Step 1: Look up the OAuth state to recover the origin that started the flow ──
     const { data: oauthState, error: stateError } = await supabase
       .from("crm_oauth_states")
       .select("*")
@@ -85,6 +85,15 @@ export async function GET(request: Request) {
     if (new Date(oauthState.expires_at).getTime() < Date.now())
       throw new Error("Expired OAuth state.");
 
+    // The origin that initiated the OAuth flow (stored by hubspot-oauth-start).
+    // This is what was used to build the authorize URL's redirect_uri, so we
+    // MUST use the same value here for the token exchange to succeed.
+    redirectTo = oauthState.redirect_to || fallbackOrigin;
+
+    // ── Step 2: Build the redirect_uri to match what was used during authorization ──
+    const callbackUri = `${redirectTo}/api/auth/callback/hubspot`;
+
+    // ── Step 3: Exchange the authorization code for tokens ──
     const tokenResponse = await fetch("https://api.hubapi.com/oauth/v1/token", {
       method: "POST",
       headers: {
@@ -107,6 +116,7 @@ export async function GET(request: Request) {
       );
     }
 
+    // ── Step 4: Fetch the HubSpot identity ──
     const identityResponse = await fetch(
       `https://api.hubapi.com/oauth/v1/access-tokens/${tokenData.access_token}`,
     );
@@ -121,6 +131,7 @@ export async function GET(request: Request) {
       Date.now() + Number(tokenData.expires_in ?? 1800) * 1000,
     ).toISOString();
 
+    // ── Step 5: Save the connection ──
     const { data: connection, error: connectionError } = await supabase
       .from("crm_connections")
       .upsert(
@@ -144,6 +155,7 @@ export async function GET(request: Request) {
     if (connectionError || !connection)
       throw connectionError ?? new Error("Failed to save HubSpot connection.");
 
+    // ── Step 6: Encrypt and store tokens ──
     const encryptedAccessToken = await encryptToken(tokenData.access_token);
     const encryptedRefreshToken = await encryptToken(
       tokenData.refresh_token ?? tokenData.access_token,
@@ -164,8 +176,6 @@ export async function GET(request: Request) {
         },
         { onConflict: "connection_id" },
       );
-
-    redirectTo = oauthState.redirect_to ?? appOrigin;
 
     return NextResponse.redirect(
       `${redirectTo}?hubspot=connected`,
