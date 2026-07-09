@@ -29,5 +29,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "supabase", "swiprcrm"]
+  "exclude": ["node_modules", "supabase", "swiprcrm", "src/app/cards", "Swipr"]
 }
