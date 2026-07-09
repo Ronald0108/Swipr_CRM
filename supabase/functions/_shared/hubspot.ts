@@ -120,15 +120,20 @@ export async function decryptToken(ciphertext: string, iv: string) {
   return new TextDecoder().decode(plaintext);
 }
 
-export function getHubSpotRedirectUri() {
-  return requireEnv("HUBSPOT_REDIRECT_URI");
-}
-
 export function getHubSpotScopes() {
   return ["crm.objects.contacts.read", "crm.objects.contacts.write"];
 }
 
-export async function exchangeCodeForTokens(code: string) {
+/**
+ * Exchange an authorization code for HubSpot tokens.
+ * @param code  The authorization code from the OAuth callback.
+ * @param redirectUri  The exact redirect_uri that was used in the authorize URL.
+ *                     This MUST match or HubSpot will reject the exchange.
+ */
+export async function exchangeCodeForTokens(
+  code: string,
+  redirectUri: string,
+) {
   const response = await fetch("https://api.hubapi.com/oauth/v1/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -136,7 +141,7 @@ export async function exchangeCodeForTokens(code: string) {
       grant_type: "authorization_code",
       client_id: requireEnv("HUBSPOT_CLIENT_ID"),
       client_secret: requireEnv("HUBSPOT_CLIENT_SECRET"),
-      redirect_uri: getHubSpotRedirectUri(),
+      redirect_uri: redirectUri,
       code,
     }),
   });

@@ -1,5 +1,10 @@
 import { encryptToken, exchangeCodeForTokens, getAdminClient, getHubSpotIdentity, getHubSpotScopes } from '../_shared/hubspot.ts';
 
+/** Build the callback URI that was used during the authorize step. */
+function buildCallbackUri(origin: string) {
+  return new URL('/api/auth/callback/hubspot', origin).toString();
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
@@ -20,7 +25,10 @@ Deno.serve(async (req) => {
     if (stateError || !oauthState) throw new Error('Invalid OAuth state.');
     if (new Date(oauthState.expires_at).getTime() < Date.now()) throw new Error('Expired OAuth state.');
 
-    const tokenData = await exchangeCodeForTokens(code);
+    // Recover the origin that started the flow to build the matching redirect_uri
+    const callerOrigin = oauthState.redirect_to ?? appOrigin;
+    const callbackUri = buildCallbackUri(callerOrigin);
+    const tokenData = await exchangeCodeForTokens(code, callbackUri);
     const identity = await getHubSpotIdentity(tokenData.access_token);
     const expiresAt = new Date(Date.now() + Number(tokenData.expires_in ?? 1800) * 1000).toISOString();
 
