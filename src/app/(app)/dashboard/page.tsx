@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Award,
   CheckCircle,
@@ -12,6 +12,8 @@ import {
   Voicemail,
   XCircle,
   Loader2,
+  PanelsTopLeft,
+  Rows3,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { LeadCard, type SwipeAction } from "@/app/components/LeadCard";
@@ -40,11 +42,13 @@ import { CallNoticeToast } from "@/app/components/CallNoticeToast";
 import { CallOutcomeModal } from "@/app/components/CallOutcomeModal";
 import { SettingsMenu } from "@/app/components/dashboard/SettingsMenu";
 import { StatsSidebar } from "@/app/components/dashboard/StatsSidebar";
+import { NewDashboardView } from "@/app/components/dashboard/NewDashboardView";
 
 // ── Home Page ─────────────────────────────────────────────────────────────
 export default function HomePage() {
   const app = useApp();
   const [activityCollapsed, setActivityCollapsed] = useState(false);
+  const [dashboardView, setDashboardView] = useState<"classic" | "new">("classic");
 
   const {
     session,
@@ -136,6 +140,11 @@ export default function HomePage() {
     loading: organizationLoading,
   } = app;
 
+  const handleNotesKeyboardSave = useCallback(() => {
+    setPressedKey("N");
+    window.setTimeout(() => setPressedKey(null), 300);
+  }, [setPressedKey]);
+
   // ── Wheel event for rolodex scroll ───────────────────────────────────
   useEffect(() => {
     const el = cardAreaRef.current;
@@ -158,7 +167,7 @@ export default function HomePage() {
       )
         return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const noModal = !showNotesModal && !showEmailModal;
+      const noModal = !showNotesModal && !showEmailModal && !showCallOutcomeModal;
 
       if (noModal && e.key === "ArrowDown") {
         e.preventDefault();
@@ -180,8 +189,13 @@ export default function HomePage() {
       const action = KEY_ACTIONS[key];
       if (!action) return;
 
-      setPressedKey(key.toUpperCase());
-      setTimeout(() => setPressedKey(null), 300);
+      // Call outcome shortcuts are handled exclusively by the open panel.
+      if (showCallOutcomeModal) return;
+
+      if (action !== "notes" && action !== "email" && action !== "call") {
+        setPressedKey(key.toUpperCase());
+        setTimeout(() => setPressedKey(null), 300);
+      }
 
       if (action === "notes") {
         if (noModal) setShowNotesModal(true);
@@ -191,6 +205,10 @@ export default function HomePage() {
         if (noModal) promptLeadCall(currentLead);
       } else if (action === "previous") {
         if (noModal) navigatePrev();
+      } else if (action === "delete") {
+        if (noModal) setShowDeleteConfirm(true);
+      } else if (action === "create") {
+        if (noModal) void handleCreateLead();
       } else {
         if (noModal) triggerSwipeAction(action as SwipeAction, addActivity);
       }
@@ -203,12 +221,15 @@ export default function HomePage() {
     navigateNext,
     showNotesModal,
     showEmailModal,
+    showCallOutcomeModal,
     currentLead,
     openLeadHistory,
     promptLeadCall,
     promptLeadEmail,
     setPressedKey,
     setShowNotesModal,
+    setShowDeleteConfirm,
+    handleCreateLead,
     addActivity,
   ]);
 
@@ -528,6 +549,89 @@ export default function HomePage() {
     );
   }
 
+  const viewToggle = (
+    <motion.button
+      type="button"
+      whileHover={{ y: -2, scale: 1.04 }}
+      whileTap={{ scale: 0.96 }}
+      onClick={() =>
+        setDashboardView((current) => (current === "classic" ? "new" : "classic"))
+      }
+      className="fixed bottom-5 right-5 z-[80] grid h-12 w-12 place-items-center rounded-full border border-white/30 text-white shadow-[0_16px_45px_rgba(24,29,12,0.28)] backdrop-blur-xl"
+      style={{
+        background:
+          dashboardView === "classic"
+            ? "linear-gradient(145deg, #8b5cf6, #5b21b6)"
+            : "linear-gradient(145deg, #292b25, #171915)",
+      }}
+      aria-label={
+        dashboardView === "classic"
+          ? "Switch to the new dashboard"
+          : "Switch to the classic dashboard"
+      }
+      title={
+        dashboardView === "classic"
+          ? "Switch to new dashboard"
+          : "Switch to classic dashboard"
+      }
+    >
+      {dashboardView === "classic" ? (
+        <PanelsTopLeft className="h-5 w-5" />
+      ) : (
+        <Rows3 className="h-5 w-5" />
+      )}
+    </motion.button>
+  );
+
+  if (dashboardView === "new") {
+    return (
+      <>
+        <NewDashboardView />
+        <div className="new-dashboard-overlays">
+          <CallNoticeToast notice={callNotice} />
+          {currentLead && (
+            <>
+              <NotesModal
+                lead={currentLead}
+                isOpen={showNotesModal}
+                onClose={() => setShowNotesModal(false)}
+                onSave={handleSaveNotes}
+                onKeyboardSave={handleNotesKeyboardSave}
+              />
+              <EmailDraftModal
+                lead={currentLead}
+                isOpen={showEmailModal}
+                onClose={() => setShowEmailModal(false)}
+                onSend={handleEmailSent}
+                onKeyboardSend={() => {
+                  setPressedKey("E");
+                  window.setTimeout(() => setPressedKey(null), 300);
+                }}
+              />
+            </>
+          )}
+          <CallOutcomeModal
+            lead={callOutcomeLead}
+            isOpen={showCallOutcomeModal}
+            onClose={closeCallOutcomeModal}
+            onSave={handleCallOutcome}
+            onSaved={() => {
+              setPressedKey("C");
+              window.setTimeout(() => setPressedKey(null), 300);
+            }}
+          />
+          <AnimatePresence>
+            <DeleteConfirmDialog />
+          </AnimatePresence>
+          <ImportModal />
+          <CrmModal />
+          <ExportModal />
+        </div>
+        {viewToggle}
+      </>
+    );
+  }
+
   // ── Main rolodex view ──
   return (
     <div
@@ -679,12 +783,17 @@ export default function HomePage() {
             isOpen={showNotesModal}
             onClose={() => setShowNotesModal(false)}
             onSave={handleSaveNotes}
+            onKeyboardSave={handleNotesKeyboardSave}
           />
           <EmailDraftModal
             lead={currentLead}
             isOpen={showEmailModal}
             onClose={() => setShowEmailModal(false)}
             onSend={handleEmailSent}
+            onKeyboardSend={() => {
+              setPressedKey("E");
+              window.setTimeout(() => setPressedKey(null), 300);
+            }}
           />
         </>
       )}
@@ -693,6 +802,10 @@ export default function HomePage() {
         isOpen={showCallOutcomeModal}
         onClose={closeCallOutcomeModal}
         onSave={handleCallOutcome}
+        onSaved={() => {
+          setPressedKey("C");
+          window.setTimeout(() => setPressedKey(null), 300);
+        }}
       />
       <AnimatePresence>
         <DeleteConfirmDialog />
@@ -700,6 +813,7 @@ export default function HomePage() {
       <ImportModal />
       <CrmModal />
       <ExportModal />
+      {viewToggle}
     </div>
   );
 }

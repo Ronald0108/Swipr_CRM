@@ -10,6 +10,7 @@ interface EmailDraftModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSend?: () => void;
+  onKeyboardSend?: () => void;
 }
 
 const TEMPLATES = [
@@ -66,7 +67,7 @@ Best,
   }
 }
 
-export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftModalProps) {
+export function EmailDraftModal({ lead, isOpen, onClose, onSend, onKeyboardSend }: EmailDraftModalProps) {
   const [template, setTemplate] = useState('follow_up');
   const [subject, setSubject] = useState(`Re: ${lead.company} — Quick Follow Up`);
   const [body, setBody] = useState(buildEmailBody(lead, 'follow_up'));
@@ -109,6 +110,7 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
     onSend?.();
     setTimeout(() => {
       onClose();
+      onKeyboardSend?.();
     }, 1500);
   };
 
@@ -272,7 +274,7 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend }: EmailDraftMod
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={handleSend}
+                  onClick={() => handleSend()}
                   disabled={sent}
                   className="btn-premium flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-xs font-semibold transition-all disabled:opacity-40"
                   style={{

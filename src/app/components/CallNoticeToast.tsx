@@ -14,12 +14,19 @@ export function CallNoticeToast({ notice }: { notice: CallNotice | null }) {
           role="status"
           aria-live="polite"
           className={`fixed right-5 top-5 z-[70] rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl ${notice.kind === 'success'
-            ? 'border-blue-400/30 bg-blue-500/20 text-blue-100'
-            : 'border-rose-400/30 bg-rose-500/20 text-rose-100'
+            ? 'border-blue-300 bg-blue-50 text-blue-900'
+            : 'border-rose-300 bg-rose-50 text-rose-900'
             }`}
-          style={{ backdropFilter: 'blur(16px)' }}
-        >
-          {notice.message}
+          >
+          <span>{notice.message}</span>
+          <motion.span
+            key={`${notice.message}-expiry`}
+            initial={{ scaleX: 1 }}
+            animate={{ scaleX: 0 }}
+            transition={{ duration: (notice.durationMs ?? 2600) / 1000, ease: 'linear' }}
+            className="absolute bottom-0 left-0 right-0 h-0.5 origin-left bg-current opacity-60"
+            aria-hidden="true"
+          />
         </motion.div>
       ) : null}
     </AnimatePresence>

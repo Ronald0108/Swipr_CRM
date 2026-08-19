@@ -10,9 +10,10 @@ interface NotesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (notes: string) => void;
+  onKeyboardSave?: () => void;
 }
 
-export function NotesModal({ lead, isOpen, onClose, onSave }: NotesModalProps) {
+export function NotesModal({ lead, isOpen, onClose, onSave, onKeyboardSave }: NotesModalProps) {
   const [notes, setNotes] = useState(lead.notes);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -28,12 +29,16 @@ export function NotesModal({ lead, isOpen, onClose, onSave }: NotesModalProps) {
 
   const handleSave = () => {
     onSave(notes);
+    onKeyboardSave?.();
     onClose();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleSave();
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
   };
 
   return (
@@ -69,8 +74,8 @@ export function NotesModal({ lead, isOpen, onClose, onSave }: NotesModalProps) {
               style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                  <FileText className="w-5 h-5 text-amber-500" />
+                  style={{ background: 'rgba(124, 58, 237, 0.12)', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                  <FileText className="w-5 h-5 text-violet-600" />
                 </div>
                 <div>
                   <h3 className="text-[var(--text-primary)] text-lg font-semibold tracking-tight">Edit Notes</h3>
@@ -117,9 +122,9 @@ export function NotesModal({ lead, isOpen, onClose, onSave }: NotesModalProps) {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={handleSave}
+                onClick={() => handleSave()}
                 className="btn-premium flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-semibold transition-colors"
-                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', border: '1px solid rgba(245,158,11,0.3)' }}
+                style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', border: '1px solid rgba(124,58,237,0.35)' }}
               >
                 <Save className="w-3.5 h-3.5" />
                 Save Notes

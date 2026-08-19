@@ -37,6 +37,7 @@ interface LeadsContextType {
   creatingLead: boolean;
   handleDeleteCurrentLead: () => Promise<void>;
   deletingLead: boolean;
+  deleteAllLeads: () => Promise<number>;
 
   leadSearchQuery: string;
   setLeadSearchQuery: (v: string) => void;
@@ -157,6 +158,25 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     } finally { setDeletingLead(false); }
   }, [currentIndex, currentLead, session, activeOrganization]);
 
+  const deleteAllLeads = useCallback(async () => {
+    if (!session || !activeOrganization) return 0;
+
+    const { data, error } = await supabase
+      .from('leads')
+      .delete()
+      .eq('organization_id', activeOrganization.id)
+      .select('id');
+
+    if (error) throw error;
+
+    const deletedCount = data?.length ?? 0;
+    setLeads([]);
+    setCurrentIndex(0);
+    currentLeadIdRef.current = null;
+    setStoredActiveLeadId(session.user.id, null);
+    return deletedCount;
+  }, [activeOrganization, session]);
+
   const findLeadSearchIndex = useCallback((query: string, startIndex: number, direction: 1 | -1) => {
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery || leads.length === 0) return -1;
@@ -259,7 +279,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   return (
     <LeadsContext.Provider value={{
       leads, setLeads, currentIndex, setCurrentIndex, leadsLoading, fetchLeads, currentLead, isDone,
-      handleLeadEdit, autoEditLeadId, autoEditLeadToken, handleCreateLead, creatingLead, handleDeleteCurrentLead, deletingLead,
+      handleLeadEdit, autoEditLeadId, autoEditLeadToken, handleCreateLead, creatingLead, handleDeleteCurrentLead, deletingLead, deleteAllLeads,
       leadSearchQuery, setLeadSearchQuery, jumpToLeadSearch, jumpToLeadSearchIndex, leadSearchMatchCount,
       navigatePrev, navigateNext, jumpToFirstLead, triggerSwipeAction,
       overlayInfo, setOverlayInfo, pressedKey, setPressedKey,

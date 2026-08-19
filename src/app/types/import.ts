@@ -21,4 +21,4 @@ export interface CsvPreviewRow {
 
 export type FetchLeadsMode = 'preserve' | 'reset';
 export type LeadEditValue = string | string[] | number;
-export type CallNotice = { kind: 'success' | 'error'; message: string };
+export type CallNotice = { kind: 'success' | 'error'; message: string; durationMs?: number };

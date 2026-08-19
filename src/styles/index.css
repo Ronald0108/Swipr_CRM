@@ -74,6 +74,80 @@
   backdrop-filter: blur(22px);
 }
 
+.new-dashboard {
+  font-family: "Avenir Next", "Century Gothic", sans-serif;
+  background:
+    radial-gradient(900px 460px at 12% -10%, rgba(139, 92, 246, 0.13), transparent 64%),
+    radial-gradient(720px 420px at 100% 15%, rgba(192, 132, 252, 0.16), transparent 62%),
+    #f7f5ef;
+}
+
+.new-dashboard-hero {
+  background:
+    linear-gradient(180deg, rgba(30, 15, 55, 0.05) 0%, rgba(25, 10, 48, 0.72) 100%),
+    radial-gradient(circle at 78% 26%, rgba(216, 180, 254, 0.4), transparent 24%),
+    radial-gradient(circle at 21% 22%, rgba(167, 139, 250, 0.34), transparent 30%),
+    linear-gradient(125deg, #a78bfa 0%, #6d3db4 42%, #32145f 100%);
+}
+
+.new-dashboard-contours {
+  background-image:
+    repeating-radial-gradient(
+      ellipse at 78% 28%,
+      transparent 0,
+      transparent 24px,
+      rgba(255, 255, 255, 0.075) 25px,
+      transparent 27px
+    ),
+    repeating-radial-gradient(
+      ellipse at 16% 88%,
+      transparent 0,
+      transparent 34px,
+      rgba(255, 255, 255, 0.055) 35px,
+      transparent 38px
+    );
+  transform: scale(1.25) rotate(-5deg);
+}
+
+.new-dashboard-overlays {
+  --surface-overlay: rgba(255, 253, 249, 0.98);
+  --surface-raised: #f5effd;
+  --surface-base: #fbf9f5;
+  --input-bg: #f1eafa;
+  --glass-border: rgba(124, 58, 237, 0.2);
+  --border-default: rgba(124, 58, 237, 0.24);
+  --border-subtle: rgba(124, 58, 237, 0.15);
+  --border-strong: rgba(124, 58, 237, 0.28);
+  --text-primary: #342044;
+  --text-secondary: #6f5b7e;
+  --text-tertiary: #9583a5;
+  --accent-indigo: #7c3aed;
+  --accent-indigo-soft: rgba(124, 58, 237, 0.12);
+  color: var(--text-primary);
+  font-family: "Avenir Next", "Century Gothic", sans-serif;
+}
+
+.new-dashboard-overlays [style*="var(--shadow-modal)"] {
+  box-shadow: 0 24px 70px rgba(74, 38, 112, 0.2), 0 4px 18px rgba(74, 38, 112, 0.08) !important;
+}
+
+.new-dashboard-overlays [style*="rgba(0,0,0,0.6)"] {
+  background: rgba(45, 24, 69, 0.34) !important;
+}
+
+.new-dashboard-overlays [style*="#F59E0B"],
+.new-dashboard-overlays [style*="#D97706"],
+.new-dashboard-overlays [style*="#F97316"],
+.new-dashboard-overlays [style*="#3B82F6"] {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+  border-color: rgba(124, 58, 237, 0.35) !important;
+}
+
+.new-dashboard-overlays [class~="text-white"],
+.new-dashboard-overlays [class~="text-white/90"] {
+  color: #ffffff !important;
+}
+
 .login-gradient-bg {
   background: radial-gradient(
     190% 75% at 50% 0%,

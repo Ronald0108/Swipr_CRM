@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import { Lead } from '../data/leads';
 import { CallNotice } from '../types/import';
 import type { CallOutcome } from '../types/activity';
+import type { SwipeAction } from '../components/LeadCard';
 import { useActivity } from './ActivityContext';
 import { useLeads } from './LeadsContext';
 import { buildTelHref } from '../lib/utils';
@@ -46,7 +47,7 @@ export function useModals() {
 
 export function ModalProvider({ children }: { children: React.ReactNode }) {
   const { addActivity } = useActivity();
-  const { handleLeadEdit, currentIndex, setOverlayInfo, leads } = useLeads();
+  const { handleLeadEdit, currentIndex, setOverlayInfo, leads, triggerSwipeAction } = useLeads();
 
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -63,18 +64,25 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   const showCallNoticeMessage = useCallback((notice: CallNotice) => {
     setCallNotice(notice);
     if (callNoticeTimeoutRef.current) window.clearTimeout(callNoticeTimeoutRef.current);
-    callNoticeTimeoutRef.current = window.setTimeout(() => { setCallNotice(null); callNoticeTimeoutRef.current = null; }, 2600);
+    const durationMs = notice.durationMs ?? 2600;
+    callNoticeTimeoutRef.current = window.setTimeout(() => { setCallNotice(null); callNoticeTimeoutRef.current = null; }, durationMs);
   }, []);
 
   const promptLeadCall = useCallback((lead: Lead | null) => {
     if (!lead) { showCallNoticeMessage({ kind: 'error', message: 'No lead selected to call.' }); return; }
     const telHref = buildTelHref(lead.phone);
-    if (!telHref) { showCallNoticeMessage({ kind: 'error', message: `${lead.name} does not have a phone number.` }); return; }
+    if (!telHref) {
+      showCallNoticeMessage({
+        kind: 'error',
+        message: `${lead.name} has no phone number. Call not initiated.`,
+        durationMs: 7000,
+      });
+      return;
+    }
     // Fire the tel: link to open the user's dialer
     const telLink = document.createElement('a');
     telLink.href = telHref; telLink.style.display = 'none'; telLink.setAttribute('aria-hidden', 'true');
     document.body.appendChild(telLink); telLink.click(); telLink.remove();
-    showCallNoticeMessage({ kind: 'success', message: `Opening dialer for ${lead.name}.` });
     // Log initial call activity and increment call attempts
     void addActivity('call', lead, { status: 'initiated' });
     handleLeadEdit(lead.id, 'callAttempts', lead.callAttempts + 1);
@@ -88,9 +96,19 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     const metadata: Record<string, unknown> = { status: outcome };
     if (notes.trim()) metadata.notes = notes.trim();
     void addActivity('call', callOutcomeLead, metadata);
+
+    const outcomeActions: Record<CallOutcome, SwipeAction> = {
+      connected: 'connected',
+      voicemail: 'voicemail',
+      no_answer: 'next',
+      busy: 'next',
+      wrong_number: 'lost',
+      declined: 'lost',
+    };
+    triggerSwipeAction(outcomeActions[outcome], addActivity);
     setShowCallOutcomeModal(false);
     setCallOutcomeLead(null);
-  }, [addActivity, callOutcomeLead]);
+  }, [addActivity, callOutcomeLead, triggerSwipeAction]);
 
   const closeCallOutcomeModal = useCallback(() => {
     setShowCallOutcomeModal(false);

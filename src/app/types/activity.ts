@@ -1,6 +1,6 @@
 export type ActivityType = 'connected' | 'lost' | 'voicemail' | 'next' | 'call' | 'email' | 'notes';
 
-export type CallOutcome = 'connected' | 'voicemail' | 'no_answer' | 'busy' | 'wrong_number';
+export type CallOutcome = 'connected' | 'voicemail' | 'no_answer' | 'busy' | 'wrong_number' | 'declined';
 
 export type ActivityFilter = 'all' | 'statuses' | 'calls' | 'emails';
 

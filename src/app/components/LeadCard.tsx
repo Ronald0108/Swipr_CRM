@@ -227,22 +227,12 @@ export function LeadCard({ lead, overlayInfo, cardIndex, onEdit, isActive, onVie
           <div className="flex items-center justify-between">
             <StatusBadge label={statusLabel} />
             <div className="flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] flex-shrink-0" />
-              <EditableField
-                value={lead.location}
-                onSave={v => onEdit('location', v)}
-                displayClassName="text-[var(--text-secondary)] text-sm font-medium"
-                inputClassName="text-[var(--text-secondary)] text-sm font-medium"
-                disabled={!isActive}
-              />
-              <span className="text-[var(--border-strong)] text-xs mx-1">·</span>
-              <EditableField
-                value={lead.timezone}
-                onSave={v => onEdit('timezone', v)}
-                displayClassName="text-[var(--text-secondary)] text-sm font-medium"
-                inputClassName="text-[var(--text-secondary)] text-sm font-medium w-16"
-                disabled={!isActive}
-              />
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--input-bg)] border border-[var(--border-subtle)]" title="Location placeholder">
+                <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+              </span>
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--input-bg)] border border-[var(--border-subtle)]" title="Timezone placeholder">
+                <Clock className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+              </span>
             </div>
           </div>
 

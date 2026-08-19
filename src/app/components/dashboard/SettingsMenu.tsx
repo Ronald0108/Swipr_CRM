@@ -1,19 +1,21 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Crown, LogOut, Settings, User, Webhook, Moon, Sun, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Crown, LogOut, Settings, Trash2, User, Webhook, Moon, Sun, CheckCircle } from 'lucide-react';
 import { useApp } from '@/app/providers';
 import { useTheme } from 'next-themes';
 
 type SettingsPanel = 'account' | 'upgrade' | null;
 
 export function SettingsMenu() {
-  const { handleLogout, session } = useApp();
+  const { deleteAllLeads, handleLogout, leads, session } = useApp();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<SettingsPanel>(null);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [deletingAllLeads, setDeletingAllLeads] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
@@ -123,7 +125,7 @@ export function SettingsMenu() {
 
       {/* Settings Panel Modal */}
       <AnimatePresence>
-        {panel && typeof document !== 'undefined' && createPortal(
+        {panel && (
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center px-4"
             style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
@@ -179,6 +181,28 @@ export function SettingsMenu() {
                       Save Changes
                     </button>
                   </div>
+
+                  <div className="border-t border-rose-500/20 pt-5">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-400" />
+                      <div>
+                        <h3 className="text-sm font-bold text-[var(--text-primary)]">Delete all leads</h3>
+                        <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">
+                          Permanently remove all {leads.length} leads from the active account. This cannot be undone.
+                        </p>
+                      </div>
+                    </div>
+                    {deleteAllError && <p className="mt-3 text-xs text-rose-400">{deleteAllError}</p>}
+                    <button
+                      type="button"
+                      onClick={() => { setDeleteAllError(''); setShowDeleteAllConfirm(true); }}
+                      disabled={deletingAllLeads || leads.length === 0}
+                      className="mt-4 inline-flex items-center gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 px-4 py-2.5 text-xs font-bold text-rose-300 transition-colors hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete all leads
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="mt-6 space-y-4">
@@ -202,8 +226,67 @@ export function SettingsMenu() {
                 </div>
               )}
             </motion.div>
-          </motion.div>,
-          document.body
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showDeleteAllConfirm && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+            style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(5px)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => { if (!deletingAllLeads) setShowDeleteAllConfirm(false); }}
+          >
+            <motion.div
+              className="w-full max-w-sm rounded-3xl p-6"
+              style={{ background: 'var(--panel-bg)', border: '1px solid rgba(244,63,94,0.25)', boxShadow: 'var(--shadow-modal)' }}
+              initial={{ opacity: 0, y: 12, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.96 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-rose-400" />
+                <div>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">Delete every lead?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+                    This will permanently delete all {leads.length} leads from this account. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteAllConfirm(false)}
+                  disabled={deletingAllLeads}
+                  className="rounded-xl px-4 py-2.5 text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--input-bg)] disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeletingAllLeads(true);
+                    setDeleteAllError('');
+                    void deleteAllLeads()
+                      .then(() => { setShowDeleteAllConfirm(false); })
+                      .catch((error: unknown) => {
+                        setDeleteAllError(error instanceof Error ? error.message : 'Failed to delete leads.');
+                      })
+                      .finally(() => setDeletingAllLeads(false));
+                  }}
+                  disabled={deletingAllLeads}
+                  className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-rose-700 disabled:opacity-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {deletingAllLeads ? 'Deleting...' : 'Delete everything'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
