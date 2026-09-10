@@ -16,7 +16,7 @@ import {
 import Link from 'next/link';
 
 // ── Hardcoded demo video ─────────────────────────────────────────────────
-const YOUTUBE_VIDEO_ID = 'Yp5x-k25RvE';
+const YOUTUBE_VIDEO_ID = '4ry693v3z_M';
 const SCHEDULE_URL = process.env.NEXT_PUBLIC_SCHEDULE_URL || 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0-ZaHYO1gMxbNE0EFZ_4yxqFxDisi8n0vIWLwqQO03WAuOaBSaZnR8f1EcOFbygIjQ14iIwNrL';
 const ENABLE_SUBSCRIPTIONS = process.env.NEXT_PUBLIC_ENABLE_SUBSCRIPTIONS === 'true';
 
