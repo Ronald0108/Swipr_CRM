@@ -16,6 +16,7 @@ import {
   Rows3,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
 import { LeadCard, type SwipeAction } from "@/app/components/LeadCard";
 import { NotesModal } from "@/app/components/NotesModal";
 import { EmailDraftModal } from "@/app/components/EmailDraftModal";
@@ -42,13 +43,15 @@ import { CallNoticeToast } from "@/app/components/CallNoticeToast";
 import { CallOutcomeModal } from "@/app/components/CallOutcomeModal";
 import { SettingsMenu } from "@/app/components/dashboard/SettingsMenu";
 import { StatsSidebar } from "@/app/components/dashboard/StatsSidebar";
+import { DemoButton } from "@/app/components/DemoButton";
 import { NewDashboardView } from "@/app/components/dashboard/NewDashboardView";
 
 // ── Home Page ─────────────────────────────────────────────────────────────
 export default function HomePage() {
   const app = useApp();
   const [activityCollapsed, setActivityCollapsed] = useState(false);
-  const [dashboardView, setDashboardView] = useState<"classic" | "new">("classic");
+  const { demoMode } = app;
+  const [dashboardView, setDashboardView] = useState<"classic" | "new">(demoMode ? "new" : "classic");
 
   const {
     session,
@@ -202,7 +205,7 @@ export default function HomePage() {
       } else if (action === "email") {
         if (noModal) promptLeadEmail(currentLead);
       } else if (action === "call") {
-        if (noModal) promptLeadCall(currentLead);
+        if (noModal) promptLeadCall(currentLead, { demoMode: dashboardView === "new" && demoMode });
       } else if (action === "previous") {
         if (noModal) navigatePrev();
       } else if (action === "delete") {
@@ -225,6 +228,8 @@ export default function HomePage() {
     currentLead,
     openLeadHistory,
     promptLeadCall,
+    dashboardView,
+    demoMode,
     promptLeadEmail,
     setPressedKey,
     setShowNotesModal,
@@ -252,7 +257,7 @@ export default function HomePage() {
             <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
           </div>
           <p className="text-white/80 text-sm font-semibold">
-            Loading SwiprCRM
+            Loading Swipr
           </p>
           <p className="text-white/20 text-xs mt-1">Checking your session…</p>
         </motion.div>
@@ -261,9 +266,16 @@ export default function HomePage() {
   }
 
   // ── Login ──
-  if (!session) {
+  if (!session && !demoMode) {
     return (
       <div className="login-gradient-bg h-screen w-screen flex items-center justify-center px-4">
+        <Link
+          href="/"
+          className="absolute left-5 top-5 rounded-xl border border-white/15 px-4 py-2.5 text-sm font-medium text-white/75 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white"
+        >
+          Return to website
+        </Link>
+        <DemoButton />
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -286,13 +298,13 @@ export default function HomePage() {
             >
               <img
                 src="/images/logo_transparent.png"
-                alt="Swipr CRM Logo"
+                alt="Swipr Logo"
                 className="w-full h-full object-cover"
               />
             </div>
             <div>
               <h1 className="text-[var(--text-primary)] text-xl font-bold tracking-tight">
-                SwiprCRM
+                Swipr
               </h1>
               <p className="text-[var(--text-tertiary)] text-xs">
                 Sign in to your account
@@ -427,12 +439,12 @@ export default function HomePage() {
             >
               <img
                 src="/images/logo_transparent.png"
-                alt="Swipr CRM logo"
+                alt="Swipr logo"
                 className="w-full h-full object-cover"
               />
             </div>
             <span className="text-[var(--text-primary)] text-sm font-semibold tracking-tight">
-              SwiprCRM
+              Swipr
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -586,7 +598,7 @@ export default function HomePage() {
   if (dashboardView === "new") {
     return (
       <>
-        <NewDashboardView />
+        <NewDashboardView demoMode={demoMode} />
         <div className="new-dashboard-overlays">
           <CallNoticeToast notice={callNotice} />
           {currentLead && (
@@ -627,7 +639,7 @@ export default function HomePage() {
           <CrmModal />
           <ExportModal />
         </div>
-        {viewToggle}
+        {!demoMode && viewToggle}
       </>
     );
   }
@@ -813,7 +825,7 @@ export default function HomePage() {
       <ImportModal />
       <CrmModal />
       <ExportModal />
-      {viewToggle}
+      {!demoMode && viewToggle}
     </div>
   );
 }

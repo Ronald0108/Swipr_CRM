@@ -48,7 +48,7 @@ export function useActivity() {
 }
 
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
+  const { session, demoMode } = useAuth();
   const { activeOrganization } = useOrganization();
   const { leads, leadsLoading } = useLeads();
 
@@ -137,6 +137,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   }, [activityLog]);
 
   useEffect(() => {
+    if (demoMode) return;
     if (!session || !activeOrganization) {
       setActivityLog([]);
       setStatsCount({ connected: 0, lost: 0, voicemail: 0, next: 0 });
@@ -152,7 +153,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
         });
     }
     if (!leadsLoading && leads.length === 0) setActivityLog([]);
-  }, [leadsLoading, leads, session, activeOrganization, mapActivitiesToItems]);
+  }, [leadsLoading, leads, session, activeOrganization, mapActivitiesToItems, demoMode]);
 
   useEffect(() => {
     const seenLeads = new Set<string>();

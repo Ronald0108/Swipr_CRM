@@ -2,7 +2,7 @@
  * vCard Parser (.vcf)
  *
  * Supports vCard 2.1, 3.0, and 4.0 formats.
- * Maps vCard properties to SwiprCRM lead fields.
+ * Maps vCard properties to Swipr lead fields.
  */
 
 import type { ParsedFileResult } from './index';

@@ -2,15 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { AlertTriangle, Crown, LogOut, Settings, Trash2, User, Webhook, Moon, Sun, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Crown, LogOut, Settings, Trash2, User, Webhook, CheckCircle } from 'lucide-react';
 import { useApp } from '@/app/providers';
-import { useTheme } from 'next-themes';
 
 type SettingsPanel = 'account' | 'upgrade' | null;
 
 export function SettingsMenu() {
   const { deleteAllLeads, handleLogout, leads, session } = useApp();
-  const { theme, setTheme, resolvedTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<SettingsPanel>(null);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
@@ -64,7 +62,7 @@ export function SettingsMenu() {
             {/* User Info */}
             <div className="px-3 py-2.5 mb-1">
               <p className="text-[var(--text-primary)] text-xs font-semibold truncate">{userEmail || 'Signed in'}</p>
-              <p className="text-[var(--text-tertiary)] text-[10px] mt-0.5">SwiprCRM Account</p>
+              <p className="text-[var(--text-tertiary)] text-[10px] mt-0.5">Swipr Account</p>
             </div>
 
             <div className="h-px mx-2 mb-1" style={{ background: 'var(--border-subtle)' }} />
@@ -93,20 +91,6 @@ export function SettingsMenu() {
             >
               <Crown className="h-3.5 w-3.5 text-amber-500" />
               Upgrade Plan
-            </button>
-
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--input-bg)]"
-            >
-              {resolvedTheme === 'dark' ? (
-                <Sun className="h-3.5 w-3.5 text-amber-500" />
-              ) : (
-                <Moon className="h-3.5 w-3.5 text-indigo-500" />
-              )}
-              {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </button>
 
             <div className="h-px mx-2 my-1" style={{ background: 'var(--border-subtle)' }} />

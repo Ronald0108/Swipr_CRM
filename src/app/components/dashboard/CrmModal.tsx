@@ -77,7 +77,7 @@ export function CrmModal() {
                 </div>
                 <div>
                   <h3 className="text-[var(--text-primary)] text-lg font-semibold tracking-tight">Integrations</h3>
-                  <p className="text-[var(--text-secondary)] text-xs">Connect your CRM to sync contacts with SwiprCRM.</p>
+                  <p className="text-[var(--text-secondary)] text-xs">Connect your CRM to sync contacts with Swipr.</p>
                 </div>
               </div>
               <button

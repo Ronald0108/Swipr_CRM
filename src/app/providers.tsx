@@ -50,9 +50,9 @@ function AppContextCombiner({ children }: { children: React.ReactNode }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
+export function AppProvider({ children, demoMode = false }: { children: React.ReactNode; demoMode?: boolean }) {
   return (
-    <AuthProvider>
+    <AuthProvider demoMode={demoMode}>
       <OrganizationProvider>
         <LeadsProvider>
           <ActivityProvider>

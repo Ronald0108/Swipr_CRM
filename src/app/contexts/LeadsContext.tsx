@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Lead } from '../data/leads';
+import { createDemoLeads } from '../data/demoLeads';
 import { useAuth } from './AuthContext';
 import { useOrganization } from './OrganizationContext';
 import {
@@ -18,7 +19,7 @@ import {
   getStoredActiveLeadId,
   setStoredActiveLeadId,
 } from '../lib/utils';
-import { SwipeAction, OverlayAction } from '../components/LeadCard';
+import { OverlayAction } from '../components/LeadCard';
 
 interface LeadsContextType {
   leads: Lead[];
@@ -48,7 +49,7 @@ interface LeadsContextType {
   navigatePrev: () => void;
   navigateNext: () => void;
   jumpToFirstLead: () => void;
-  triggerSwipeAction: (action: SwipeAction, addActivityHook?: (action: SwipeAction, lead: Lead) => Promise<void>) => void;
+  triggerSwipeAction: (action: OverlayAction, addActivityHook?: (action: OverlayAction, lead: Lead) => Promise<void>) => void;
   overlayInfo: { action: OverlayAction; index: number } | null;
   setOverlayInfo: React.Dispatch<React.SetStateAction<{ action: OverlayAction; index: number } | null>>;
   pressedKey: string | null;
@@ -70,13 +71,13 @@ export function useLeads() {
 }
 
 export function LeadsProvider({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
+  const { session, demoMode } = useAuth();
   const { activeOrganization } = useOrganization();
   const router = useRouter();
   
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leads, setLeads] = useState<Lead[]>(() => demoMode ? createDemoLeads() : []);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [leadsLoading, setLeadsLoading] = useState(true);
+  const [leadsLoading, setLeadsLoading] = useState(!demoMode);
   const [creatingLead, setCreatingLead] = useState(false);
   const [deletingLead, setDeletingLead] = useState(false);
   const [autoEditLeadId, setAutoEditLeadId] = useState<string | null>(null);
@@ -95,6 +96,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   const isDone = !leadsLoading && leads.length > 0 && currentIndex >= leads.length;
 
   const fetchLeads = useCallback(async (mode: FetchLeadsMode = 'preserve') => {
+    if (demoMode) { setLeads(createDemoLeads()); setCurrentIndex(0); setLeadsLoading(false); return; }
     if (!session || !activeOrganization) { setLeads([]); setCurrentIndex(0); setLeadsLoading(false); return; }
     setLeadsLoading(true);
     try {
@@ -107,14 +109,14 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
       setLeads(nextLeads);
       setCurrentIndex(nextIndex);
     } finally { setLeadsLoading(false); }
-  }, [session, activeOrganization]);
+  }, [session, activeOrganization, demoMode]);
 
   const persistLeadEdit = useCallback(async (leadId: string, field: keyof Lead, value: LeadEditValue) => {
     if (!session || !activeOrganization) return;
     if (field === 'id') { console.error('Refusing to edit immutable lead id.'); return; }
     const { error } = await supabase.from('leads').update({ [getLeadDatabaseColumn(field)]: value }).eq('id', leadId).eq('organization_id', activeOrganization.id);
     if (error) { console.error('Error saving lead edit:', error); await fetchLeads(); }
-  }, [fetchLeads, session, activeOrganization]);
+  }, [fetchLeads, session, activeOrganization, demoMode]);
 
   const handleLeadEdit = useCallback((leadId: string, field: keyof Lead, value: LeadEditValue) => {
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, [field]: value } : l));
@@ -207,7 +209,7 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
     if (session && lead) setStoredActiveLeadId(session.user.id, lead.id);
   }, [findLeadSearchIndex, leads, session]);
 
-  const triggerSwipeAction = useCallback((action: SwipeAction, addActivityHook?: (action: SwipeAction, lead: Lead) => Promise<void>) => {
+  const triggerSwipeAction = useCallback((action: OverlayAction, addActivityHook?: (action: OverlayAction, lead: Lead) => Promise<void>) => {
     if (isAnimatingRef.current || isDone) return;
     isAnimatingRef.current = true;
     setOverlayInfo({ action, index: currentIndex });
@@ -261,9 +263,10 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   }, [currentIndex, leads.length]);
 
   useEffect(() => {
+    if (demoMode) return;
     if (session && activeOrganization) { fetchLeads(); }
     else { setLeads([]); setCurrentIndex(0); setLeadsLoading(false); currentLeadIdRef.current = null; }
-  }, [fetchLeads, session, activeOrganization]);
+  }, [fetchLeads, session, activeOrganization, demoMode]);
 
   const openLeadHistory = useCallback((leadId: string) => {
     if (!session) return;

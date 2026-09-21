@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { setStoredActiveLeadId } from '../lib/utils';
 
 interface AuthContextType {
+  demoMode: boolean;
   session: Session | null;
   authLoading: boolean;
   authSubmitting: boolean;
@@ -26,7 +27,7 @@ export function useAuth() {
   return ctx;
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, demoMode = false }: { children: React.ReactNode; demoMode?: boolean }) {
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authSubmitting, setAuthSubmitting] = useState(false);
@@ -35,12 +36,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState('');
 
   const handleLogin = useCallback(async () => {
+    if (demoMode) return;
     setAuthError('');
     setAuthSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setAuthError(error.message); setAuthSubmitting(false); return; }
     setAuthSubmitting(false);
-  }, [email, password]);
+  }, [email, password, demoMode]);
 
   const handleLogout = useCallback(async () => {
     if (session) setStoredActiveLeadId(session.user.id, null);
@@ -48,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   useEffect(() => {
+    if (demoMode) { setAuthLoading(false); return; }
     supabase.auth.getSession().then(({ data: { session: newSession } }) => { 
       setSession(newSession); 
       setAuthLoading(false); 
@@ -62,11 +65,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     
     return () => subscription.unsubscribe();
-  }, []);
+  }, [demoMode]);
 
   return (
     <AuthContext.Provider value={{
-      session, authLoading, authSubmitting, email, setEmail, password, setPassword, authError,
+      demoMode, session, authLoading, authSubmitting, email, setEmail, password, setPassword, authError,
       handleLogin, handleLogout
     }}>
       {children}

@@ -22,13 +22,15 @@ import {
   Voicemail,
   X,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useApp } from '@/app/providers';
 import type { Lead } from '@/app/data/leads';
 import type { SwipeAction } from '@/app/components/LeadCard';
 import { actionMeta } from '@/app/lib/constants';
 import { SettingsMenu } from './SettingsMenu';
 import { KeyboardLegend } from './KeyboardLegend';
+import { DemoKeyboard } from './DemoKeyboard';
+import Link from 'next/link';
 
 type EditableLeadField = 'name' | 'company' | 'title' | 'phone' | 'email' | 'location' | 'notes';
 
@@ -39,6 +41,7 @@ function InlineEdit({
   onSave,
   className = '',
   multiline = false,
+  emptyLabel = 'Add details',
 }: {
   value: string;
   field: EditableLeadField;
@@ -46,6 +49,7 @@ function InlineEdit({
   onSave: (leadId: string, field: EditableLeadField, value: string) => void;
   className?: string;
   multiline?: boolean;
+  emptyLabel?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -113,7 +117,7 @@ function InlineEdit({
       className={`rounded-md text-left transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c3aed] ${className}`}
       title="Click to edit"
     >
-      {value || 'Add details'}
+      {value || emptyLabel}
     </button>
   );
 }
@@ -162,7 +166,10 @@ const STATUS_ACTIONS: Array<{
   { action: 'lost', label: 'Lost', icon: <X className="h-4 w-4" />, tone: 'bg-[#f3e2f0] text-[#9a3c7e]' },
 ];
 
-export function NewDashboardView() {
+export function NewDashboardView({ demoMode }: {
+  demoMode: boolean;
+}) {
+  const reducedMotion = useReducedMotion();
   const {
     leads,
     currentLead,
@@ -200,6 +207,11 @@ export function NewDashboardView() {
     crmConnection,
   } = useApp();
 
+  const [navigation, setNavigation] = useState({ index: currentIndex, direction: 1 });
+  if (navigation.index !== currentIndex) {
+    setNavigation({ index: currentIndex, direction: currentIndex > navigation.index ? 1 : -1 });
+  }
+
   const openIntegrations = () => {
     setShowCrmModal(true);
     setCrmError('');
@@ -228,7 +240,9 @@ export function NewDashboardView() {
   if (isDone || !currentLead) {
     return (
       <div className="new-dashboard min-h-screen">
+        {demoMode && <DemoKeyboard />}
         <NewDashboardHeader
+          demoMode={demoMode}
           searchValue={leadSearchQuery}
           matchCount={leadSearchMatchCount}
           onSearchChange={setLeadSearchQuery}
@@ -282,7 +296,9 @@ export function NewDashboardView() {
 
   return (
     <div className="new-dashboard min-h-screen text-[#25271f]">
+      {demoMode && <DemoKeyboard />}
       <NewDashboardHeader
+        demoMode={demoMode}
         searchValue={leadSearchQuery}
         matchCount={leadSearchMatchCount}
         onSearchChange={setLeadSearchQuery}
@@ -296,11 +312,20 @@ export function NewDashboardView() {
       <KeyboardLegend orientation="vertical" variant="new" />
 
       <main className="mx-auto w-full max-w-[1180px] px-4 pb-28 pt-10 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[30px]">
+        <AnimatePresence initial={false} mode="popLayout" custom={navigation.direction}>
         <motion.article
           key={currentLead.id}
-          initial={{ opacity: 0, y: 16, scale: 0.99 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          custom={navigation.direction}
+          variants={{
+            enter: (direction: number) => ({ y: reducedMotion ? 0 : `${direction * 100}%` }),
+            center: { y: 0 },
+            exit: (direction: number) => ({ y: reducedMotion ? 0 : `${direction * -100}%` }),
+          }}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: reducedMotion ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="overflow-hidden rounded-[30px] border border-[#d8d6cb] bg-white shadow-[0_22px_70px_rgba(58,52,40,0.11)]"
         >
           <section className="new-dashboard-hero relative min-h-[310px] overflow-hidden p-6 sm:min-h-[370px] sm:p-8">
@@ -318,7 +343,7 @@ export function NewDashboardView() {
                     onSave={handleLeadEdit}
                     className="block text-sm font-bold text-white hover:bg-white/10"
                   />
-                  <p className="mt-0.5 text-xs text-white/75">{currentLead.source || 'SwiprCRM lead'}</p>
+                  <p className="mt-0.5 text-xs text-white/75">{currentLead.source || (demoMode ? 'Swipr lead' : 'Swipr lead')}</p>
                 </div>
               </div>
               <span className="rounded-full border border-white/20 bg-[#2d1455]/65 px-4 py-2 text-xs font-bold text-white backdrop-blur-md">
@@ -327,14 +352,12 @@ export function NewDashboardView() {
             </div>
 
             <div className="absolute inset-x-6 bottom-7 z-10 max-w-[760px] text-white sm:inset-x-8 sm:bottom-9">
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-white/70">
-                {currentLead.industry || 'Prospect profile'}
-              </p>
               <InlineEdit
                 value={currentLead.company}
                 field="company"
                 lead={currentLead}
                 onSave={handleLeadEdit}
+                emptyLabel={currentLead.name}
                 className="block max-w-full text-4xl font-bold leading-[1.02] tracking-[-0.05em] text-white hover:bg-white/10 sm:text-5xl"
               />
               <InlineEdit
@@ -402,10 +425,10 @@ export function NewDashboardView() {
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c897b]">Quick actions</p>
                 <div className="mt-3 grid grid-cols-4 gap-1">
-                  <IconAction label="Call" icon={<Phone className="h-4 w-4" />} onClick={() => promptLeadCall(currentLead)} emphasis />
+                  <IconAction label="Call" icon={<Phone className="h-4 w-4" />} onClick={() => promptLeadCall(currentLead, { demoMode })} emphasis />
                   <IconAction label="Email" icon={<Mail className="h-4 w-4" />} onClick={() => promptLeadEmail(currentLead)} />
                   <IconAction label="Notes" icon={<MessageSquareText className="h-4 w-4" />} onClick={() => setShowNotesModal(true)} />
-                  <IconAction label="History" icon={<History className="h-4 w-4" />} onClick={() => openLeadHistory(currentLead.id)} />
+                  {!demoMode && <IconAction label="History" icon={<History className="h-4 w-4" />} onClick={() => openLeadHistory(currentLead.id)} />}
                 </div>
               </div>
               <div className="mt-5 border-t border-[#e5e2d8] pt-5">
@@ -454,6 +477,8 @@ export function NewDashboardView() {
             </button>
           </footer>
         </motion.article>
+        </AnimatePresence>
+        </div>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.05fr]">
           <div className="rounded-[26px] border border-[#dcd9ce] bg-white p-6 shadow-[0_14px_45px_rgba(58,52,40,0.06)]">
@@ -534,6 +559,7 @@ export function NewDashboardView() {
 }
 
 function NewDashboardHeader({
+  demoMode,
   searchValue,
   matchCount,
   onSearchChange,
@@ -544,6 +570,7 @@ function NewDashboardHeader({
   onExport,
   onIntegrations,
 }: {
+  demoMode: boolean;
   searchValue: string;
   matchCount: number;
   onSearchChange: (value: string) => void;
@@ -580,8 +607,8 @@ function NewDashboardHeader({
     >
       <div className="mx-auto flex h-[76px] max-w-[1500px] items-center gap-3 px-4 sm:px-6">
         <div className="flex flex-none items-center gap-2.5">
-          <img src="/images/logo_transparent.png" alt="SwiprCRM" className="h-9 w-9 rounded-full object-cover" />
-          <span className="hidden text-lg font-black tracking-[-0.04em] text-[#1e211b] sm:block">SwiprCRM</span>
+          <img src="/images/logo_transparent.png" alt={demoMode ? 'Swipr' : 'Swipr'} className="h-9 w-9 rounded-full object-cover" />
+          <span className="hidden text-lg font-black tracking-[-0.04em] text-[#1e211b] sm:block">{demoMode ? 'Swipr' : 'Swipr'}</span>
         </div>
 
         <div className="relative ml-1 min-w-0 flex-1 sm:ml-5 sm:max-w-md">
@@ -600,7 +627,7 @@ function NewDashboardHeader({
           )}
         </div>
 
-        <nav className="ml-auto hidden items-center gap-1 lg:flex">
+        {!demoMode && <nav className="ml-auto hidden items-center gap-1 lg:flex">
           <button type="button" className="rounded-xl bg-[#eee4ff] px-4 py-2.5 text-sm font-bold text-[#5b21b6]">Leads</button>
           <button type="button" onClick={onIntegrations} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-[#5f5d54] hover:bg-[#eee4ff]">
             Integrations
@@ -611,10 +638,11 @@ function NewDashboardHeader({
           <button type="button" onClick={onExport} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-[#5f5d54] hover:bg-[#eee4ff]">
             Export
           </button>
-        </nav>
+        </nav>}
 
         <div className="ml-auto flex items-center gap-2 lg:ml-3">
-          <button
+          {demoMode && <Link href="/" className="rounded-2xl bg-purple-600 px-4 py-3 text-sm font-bold text-white">Exit demo</Link>}
+          {!demoMode && <button
             type="button"
             onClick={onCreate}
             disabled={creating}
@@ -622,14 +650,14 @@ function NewDashboardHeader({
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{creating ? 'Adding…' : 'New lead'}</span>
-          </button>
-          <div className="hidden sm:block">
+          </button>}
+          {!demoMode && <div className="hidden sm:block">
             <SettingsMenu />
-          </div>
+          </div>}
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-1 border-t border-[#e7e4db] px-3 py-2 lg:hidden">
+      {!demoMode && <div className="flex items-center justify-center gap-1 border-t border-[#e7e4db] px-3 py-2 lg:hidden">
         <button type="button" onClick={onIntegrations} className="grid h-9 w-9 place-items-center rounded-xl text-[#666457] hover:bg-white" aria-label="Open integrations">
           <RefreshCw className="h-4 w-4" />
         </button>
@@ -642,7 +670,7 @@ function NewDashboardHeader({
         <div className="sm:hidden">
           <SettingsMenu />
         </div>
-      </div>
+      </div>}
     </motion.header>
   );
 }

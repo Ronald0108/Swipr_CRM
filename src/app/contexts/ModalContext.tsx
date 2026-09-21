@@ -24,7 +24,7 @@ interface ModalContextType {
   setShowCrmModal: (v: boolean) => void;
 
   callNotice: CallNotice | null;
-  promptLeadCall: (lead: Lead | null) => void;
+  promptLeadCall: (lead: Lead | null, options?: { demoMode?: boolean }) => void;
   promptLeadEmail: (lead: Lead | null) => void;
   showCallNoticeMessage: (notice: CallNotice) => void;
 
@@ -47,7 +47,7 @@ export function useModals() {
 
 export function ModalProvider({ children }: { children: React.ReactNode }) {
   const { addActivity } = useActivity();
-  const { handleLeadEdit, currentIndex, setOverlayInfo, leads, triggerSwipeAction } = useLeads();
+  const { handleLeadEdit, currentIndex, leads, triggerSwipeAction } = useLeads();
 
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -68,7 +68,7 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     callNoticeTimeoutRef.current = window.setTimeout(() => { setCallNotice(null); callNoticeTimeoutRef.current = null; }, durationMs);
   }, []);
 
-  const promptLeadCall = useCallback((lead: Lead | null) => {
+  const promptLeadCall = useCallback((lead: Lead | null, options?: { demoMode?: boolean }) => {
     if (!lead) { showCallNoticeMessage({ kind: 'error', message: 'No lead selected to call.' }); return; }
     const telHref = buildTelHref(lead.phone);
     if (!telHref) {
@@ -80,9 +80,11 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     // Fire the tel: link to open the user's dialer
-    const telLink = document.createElement('a');
-    telLink.href = telHref; telLink.style.display = 'none'; telLink.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(telLink); telLink.click(); telLink.remove();
+    if (!options?.demoMode) {
+      const telLink = document.createElement('a');
+      telLink.href = telHref; telLink.style.display = 'none'; telLink.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(telLink); telLink.click(); telLink.remove();
+    }
     // Log initial call activity and increment call attempts
     void addActivity('call', lead, { status: 'initiated' });
     handleLeadEdit(lead.id, 'callAttempts', lead.callAttempts + 1);
@@ -124,24 +126,14 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   const handleSaveNotes = useCallback((notes: string) => {
     const currentLead = leads[currentIndex] ?? leads[leads.length - 1] ?? null;
     if (!currentLead) return;
-    const capturedLead = currentLead;
-    const capturedIndex = currentIndex;
     handleLeadEdit(currentLead.id, 'notes', notes);
-    setOverlayInfo({ action: 'notes', index: capturedIndex });
-    setTimeout(() => setOverlayInfo(null), 1200);
-    void addActivity('notes', capturedLead);
-  }, [addActivity, currentIndex, handleLeadEdit, leads, setOverlayInfo]);
+    triggerSwipeAction('notes', addActivity);
+  }, [addActivity, currentIndex, handleLeadEdit, leads, triggerSwipeAction]);
 
   const handleEmailSent = useCallback(() => {
-    const capturedIndex = currentIndex;
-    const capturedLead  = leads[capturedIndex];
-    if (!capturedLead) return;
-    void addActivity('email', capturedLead);
-    setTimeout(() => {
-      setOverlayInfo({ action: 'email', index: capturedIndex });
-      setTimeout(() => setOverlayInfo(null), 1400);
-    }, 1700);
-  }, [currentIndex, leads, addActivity, setOverlayInfo]);
+    if (!leads[currentIndex]) return;
+    triggerSwipeAction('email', addActivity);
+  }, [currentIndex, leads, addActivity, triggerSwipeAction]);
 
   useEffect(() => {
     return () => { if (callNoticeTimeoutRef.current) window.clearTimeout(callNoticeTimeoutRef.current); };

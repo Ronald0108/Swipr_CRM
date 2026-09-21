@@ -3,7 +3,7 @@ import '@/styles/index.css';
 import { ThemeProvider } from '@/app/components/ThemeProviderWrapper';
 
 export const metadata: Metadata = {
-  title: 'SwiprCRM — High-velocity lead sorting for your sales team',
+  title: 'Swipr — High-velocity lead sorting for your sales team',
   description:
     'A keyboard-centric interface for sorting your leads. Flow state prospecting that turns lead management into a high-velocity workflow.',
 };

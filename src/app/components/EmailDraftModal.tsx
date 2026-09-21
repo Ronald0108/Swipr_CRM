@@ -107,9 +107,9 @@ export function EmailDraftModal({ lead, isOpen, onClose, onSend, onKeyboardSend 
   const handleSend = () => {
     window.localStorage.removeItem(draftStorageKey);
     setSent(true);
-    onSend?.();
     setTimeout(() => {
       onClose();
+      onSend?.();
       onKeyboardSend?.();
     }, 1500);
   };

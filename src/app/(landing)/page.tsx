@@ -37,24 +37,24 @@ const stagger = {
 // ── FAQ Data ─────────────────────────────────────────────────────────────
 const FAQ_ITEMS = [
   {
-    q: 'What is SwiprCRM?',
-    a: 'SwiprCRM is a keyboard-centric lead management tool that lets your sales team qualify, sort, and act on leads at blazing speed. Think Tinder for your pipeline — swipe right on hot leads, left on cold ones, all without touching your mouse.',
+    q: 'What is Swipr?',
+    a: 'Swipr is a keyboard-centric lead management tool that lets your sales team qualify, sort, and act on leads at blazing speed. Think Tinder for your pipeline — swipe right on hot leads, left on cold ones, all without touching your mouse.',
   },
   {
-    q: 'What inspired the creation of SwiprCRM?',
-    a: 'During my time as an SDR, I found myself constantly feeling burned out by navigating and managing CRMs during prospecting. I built SwiprCRM to remove the friction, clutter, and endless clicking found in traditional CRMs.',
+    q: 'What inspired the creation of Swipr?',
+    a: 'During my time as an SDR, I found myself constantly feeling burned out by navigating and managing CRMs during prospecting. I built Swipr to remove the friction, clutter, and endless clicking found in traditional CRMs.',
   },
   {
     q: 'How is this different from traditional CRMs?',
-    a: 'SwiprCRM focuses on speed and flow, not heavy admin work. With a swipe-to-sort workflow, one-keypress actions, minimal UI, and fast lead-to-lead navigation, it is designed for outbound reps who need speed over complexity.',
+    a: 'Swipr focuses on speed and flow, not heavy admin work. With a swipe-to-sort workflow, one-keypress actions, minimal UI, and fast lead-to-lead navigation, it is designed for outbound reps who need speed over complexity.',
   },
   {
-    q: 'Can my leads be imported or exported into SwiprCRM?',
-    a: 'Yes! SwiprCRM supports lead import via CSV and integrates with existing CRM tools like HubSpot so you can easily sync your pipeline.',
+    q: 'Can my leads be imported or exported into Swipr?',
+    a: 'Yes! Swipr supports lead import via CSV and integrates with existing CRM tools like HubSpot so you can easily sync your pipeline.',
   },
   {
-    q: 'Who are the intended users for SwiprCRM?',
-    a: 'SwiprCRM is built for SDRs, outbound sales teams, and founders doing their own prospecting who want velocity without manager-centric clutter.',
+    q: 'Who are the intended users for Swipr?',
+    a: 'Swipr is built for SDRs, outbound sales teams, and founders doing their own prospecting who want velocity without manager-centric clutter.',
   },
   {
     q: "What if I don't like the design?",
@@ -62,7 +62,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What is the community Discord for?',
-    a: 'The community Discord is open to all users to give feedback, troubleshoot, and discuss all things SwiprCRM. You will get access to it once you join!',
+    a: 'The community Discord is open to all users to give feedback, troubleshoot, and discuss all things Swipr. You will get access to it once you join!',
   },
 ];
 
@@ -176,8 +176,8 @@ export default function LandingPage() {
 
   const handleWaitlistSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const subject = encodeURIComponent('SwiprCRM waitlist request');
-    const body = encodeURIComponent(`Please add me to the SwiprCRM waitlist.\n\nEmail: ${waitlistEmail}`);
+    const subject = encodeURIComponent('Swipr waitlist request');
+    const body = encodeURIComponent(`Please add me to the Swipr waitlist.\n\nEmail: ${waitlistEmail}`);
     window.location.href = `mailto:ronaldchiong2005@gmail.com?subject=${subject}&body=${body}`;
   }, [waitlistEmail]);
 
@@ -194,12 +194,12 @@ export default function LandingPage() {
             <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl">
               <img
                 src="/images/logo_transparent.png"
-                alt="SwiprCRM"
+                alt="Swipr"
                 className="w-full h-full object-cover"
               />
             </div>
             <span className="font-normal text-base tracking-[-0.01em] text-white">
-              SwiprCRM
+              Swipr
             </span>
           </div>
 
@@ -235,7 +235,7 @@ export default function LandingPage() {
               custom={0}
               className="mb-5 text-xs font-normal uppercase tracking-[0.38em] text-white"
             >
-              SWIPRCRM
+               Swipr
             </motion.div>
 
             <motion.h1
@@ -321,7 +321,7 @@ export default function LandingPage() {
                         ref={videoRef}
                         className="w-full h-full"
                         src={videoSrc}
-                        title="SwiprCRM Demo"
+                        title="Swipr Demo"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -347,7 +347,7 @@ export default function LandingPage() {
                       <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
                         <Keyboard className="w-8 h-8 text-violet-300" />
                       </div>
-                      <p className="text-white/80 font-semibold text-lg mb-1">SwiprCRM Demo</p>
+                      <p className="text-white/80 font-semibold text-lg mb-1">Swipr Demo</p>
                       <p className="text-white/40 text-sm">
                         Set NEXT_PUBLIC_YOUTUBE_VIDEO_ID to display your demo video
                       </p>
@@ -688,12 +688,12 @@ export default function LandingPage() {
                 <div className="w-7 h-7 rounded-lg overflow-hidden">
                   <img
                     src="/images/logo_transparent.png"
-                    alt="SwiprCRM"
+                    alt="Swipr"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <span className="font-medium text-[15px] tracking-tight text-[#1d1d1f]">
-                  SwiprCRM
+                  Swipr
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-[#77777d]">
@@ -715,6 +715,9 @@ export default function LandingPage() {
                 </li>
                 <li>
                   <Link href="/dashboard" className="transition-colors hover:text-[#1d1d1f]">Dashboard</Link>
+                </li>
+                <li>
+                  <Link href="/demo" className="transition-colors hover:text-[#1d1d1f]">Try demo</Link>
                 </li>
               </ul>
             </div>
@@ -767,7 +770,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-[#e7e7e7]">
             <p className="text-xs text-[#9a9a9f]">
-              © {new Date().getFullYear()} SwiprCRM. All rights reserved.
+              © {new Date().getFullYear()} Swipr. All rights reserved.
             </p>
             <div className="flex items-center gap-3">
               <a

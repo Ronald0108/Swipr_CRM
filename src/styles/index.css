@@ -149,28 +149,13 @@
 }
 
 .login-gradient-bg {
-  background: radial-gradient(
-    190% 75% at 50% 0%,
-    #070C1E 18%,
-    #112E81 45%,
-    #4647AE 75%,
-    #4382DF 100%
-  );
+  background: #000000;
   position: relative;
   overflow: hidden;
 }
 
 .login-gradient-bg::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 40%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
-  animation: loginGradientShift 20s ease-in-out infinite alternate;
-  pointer-events: none;
+  display: none;
 }
 
 @keyframes loginGradientShift {
@@ -344,13 +329,7 @@
 
 @media (max-width: 809.98px) {
   .login-gradient-bg {
-    background: radial-gradient(
-      276% 105% at 50% 0%,
-      #050507 16%,
-      #0d0a18 38%,
-      #211447 68%,
-      #4b2bb8 92%
-    );
+    background: #000000;
   }
 }
 

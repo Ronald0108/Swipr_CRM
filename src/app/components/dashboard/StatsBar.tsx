@@ -19,9 +19,9 @@ export function StatsBar() {
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center"
           style={{ background: 'var(--input-bg)', border: '1px solid var(--border-subtle)' }}>
-          <img src="/images/logo_transparent.png" alt="Swipr CRM logo" className="w-full h-full object-cover" />
+          <img src="/images/logo_transparent.png" alt="Swipr logo" className="w-full h-full object-cover" />
         </div>
-        <span className="text-[var(--text-primary)] text-sm font-semibold tracking-tight hidden sm:block">SwiprCRM</span>
+        <span className="text-[var(--text-primary)] text-sm font-semibold tracking-tight hidden sm:block">Swipr</span>
       </div>
 
       {/* Right: Action buttons */}
