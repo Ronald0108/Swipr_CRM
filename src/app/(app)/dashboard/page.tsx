@@ -12,8 +12,6 @@ import {
   Voicemail,
   XCircle,
   Loader2,
-  PanelsTopLeft,
-  Rows3,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
@@ -43,7 +41,6 @@ import { CallNoticeToast } from "@/app/components/CallNoticeToast";
 import { CallOutcomeModal } from "@/app/components/CallOutcomeModal";
 import { SettingsMenu } from "@/app/components/dashboard/SettingsMenu";
 import { StatsSidebar } from "@/app/components/dashboard/StatsSidebar";
-import { DemoButton } from "@/app/components/DemoButton";
 import { NewDashboardView } from "@/app/components/dashboard/NewDashboardView";
 
 // ── Home Page ─────────────────────────────────────────────────────────────
@@ -51,7 +48,7 @@ export default function HomePage() {
   const app = useApp();
   const [activityCollapsed, setActivityCollapsed] = useState(false);
   const { demoMode } = app;
-  const [dashboardView, setDashboardView] = useState<"classic" | "new">(demoMode ? "new" : "classic");
+  const dashboardView = "new";
 
   const {
     session,
@@ -275,7 +272,6 @@ export default function HomePage() {
         >
           Return to website
         </Link>
-        <DemoButton />
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -561,40 +557,6 @@ export default function HomePage() {
     );
   }
 
-  const viewToggle = (
-    <motion.button
-      type="button"
-      whileHover={{ y: -2, scale: 1.04 }}
-      whileTap={{ scale: 0.96 }}
-      onClick={() =>
-        setDashboardView((current) => (current === "classic" ? "new" : "classic"))
-      }
-      className="fixed bottom-5 right-5 z-[80] grid h-12 w-12 place-items-center rounded-full border border-white/30 text-white shadow-[0_16px_45px_rgba(24,29,12,0.28)] backdrop-blur-xl"
-      style={{
-        background:
-          dashboardView === "classic"
-            ? "linear-gradient(145deg, #8b5cf6, #5b21b6)"
-            : "linear-gradient(145deg, #292b25, #171915)",
-      }}
-      aria-label={
-        dashboardView === "classic"
-          ? "Switch to the new dashboard"
-          : "Switch to the classic dashboard"
-      }
-      title={
-        dashboardView === "classic"
-          ? "Switch to new dashboard"
-          : "Switch to classic dashboard"
-      }
-    >
-      {dashboardView === "classic" ? (
-        <PanelsTopLeft className="h-5 w-5" />
-      ) : (
-        <Rows3 className="h-5 w-5" />
-      )}
-    </motion.button>
-  );
-
   if (dashboardView === "new") {
     return (
       <>
@@ -639,7 +601,6 @@ export default function HomePage() {
           <CrmModal />
           <ExportModal />
         </div>
-        {!demoMode && viewToggle}
       </>
     );
   }
@@ -825,7 +786,6 @@ export default function HomePage() {
       <ImportModal />
       <CrmModal />
       <ExportModal />
-      {!demoMode && viewToggle}
     </div>
   );
 }

@@ -35,13 +35,12 @@ export function SettingsMenu() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:ring-2 hover:ring-indigo-500/30"
+        className="h-8 w-8 rounded-full border border-[#d7d4ca] bg-white text-[#6d28d9] flex items-center justify-center transition-all hover:ring-2 hover:ring-[#6d28d9]/20"
         style={{
-          background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-          boxShadow: '0 2px 8px rgba(99,102,241,0.25)',
+          boxShadow: '0 2px 8px rgba(54,50,38,0.12)',
         }}
       >
-        <span className="text-white text-xs font-bold">{userInitial}</span>
+        <span className="text-xs font-bold">{userInitial}</span>
       </button>
 
       <AnimatePresence>
@@ -53,16 +52,16 @@ export function SettingsMenu() {
             transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="absolute right-0 top-11 z-50 w-60 overflow-hidden rounded-2xl p-1.5"
             style={{
-              background: 'var(--panel-bg)',
-              border: '1px solid var(--glass-border)',
-              boxShadow: 'var(--shadow-modal)',
+              background: '#ffffff',
+              border: '1px solid #e4e1d8',
+              boxShadow: '0 20px 40px rgba(54,50,38,0.14)',
               backdropFilter: 'blur(40px)',
             }}
           >
             {/* User Info */}
             <div className="px-3 py-2.5 mb-1">
-              <p className="text-[var(--text-primary)] text-xs font-semibold truncate">{userEmail || 'Signed in'}</p>
-              <p className="text-[var(--text-tertiary)] text-[10px] mt-0.5">Swipr Account</p>
+              <p className="text-[#24271f] text-xs font-semibold truncate">{userEmail || 'Signed in'}</p>
+              <p className="text-[#7b7b68] text-[10px] mt-0.5">Swipr Account</p>
             </div>
 
             <div className="h-px mx-2 mb-1" style={{ background: 'var(--border-subtle)' }} />
@@ -70,7 +69,7 @@ export function SettingsMenu() {
             <button
               type="button"
               onClick={() => { setPanel('account'); setOpen(false); }}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--input-bg)]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs text-[#5f5d54] transition-colors hover:bg-[#f5f4ee]"
             >
               <User className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
               Account Settings
@@ -78,7 +77,7 @@ export function SettingsMenu() {
 
             <a
               href="/dashboard/settings/team"
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--input-bg)]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs text-[#5f5d54] transition-colors hover:bg-[#f5f4ee]"
             >
               <Webhook className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
               Team Settings
@@ -87,7 +86,7 @@ export function SettingsMenu() {
             <button
               type="button"
               onClick={() => { setPanel('upgrade'); setOpen(false); }}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--input-bg)]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs text-[#5f5d54] transition-colors hover:bg-[#f5f4ee]"
             >
               <Crown className="h-3.5 w-3.5 text-amber-500" />
               Upgrade Plan
